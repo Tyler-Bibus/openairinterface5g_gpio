@@ -4163,6 +4163,8 @@ static void nr_ue_process_rar(NR_UE_MAC_INST_t *mac, nr_downlink_indication_t *d
     if (rarh->T == 1) {
       n_subPDUs++;
       LOG_I(NR_MAC, "[UE %d][RAPROC][RA-RNTI %04x] Got RAPID RAR subPDU\n", mac->ue_id, rnti);
+      //FIXME insertted patch
+      rarh->RAPID = preamble_index;
     } else {
       int bi_ms = table_7_2_1[((NR_RA_HEADER_BI *)rarh)->BI] * ra->scaling_factor_bi;
       int slots_per_ms = mac->frame_structure.numb_slots_frame / 10;

@@ -111,7 +111,7 @@ static int16_t ssb_index_from_prach(module_id_t module_idP,
     if((mu == 1) || (mu == 3))
       slot_index = 0; // For scs = 30khz and 120khz
   }
-  int config_period = cc->prach_info.x;
+  int config_period = cc->prach_info.x; // TODO tyler; Is this the diff 1?
   //  prach_occasion_id = subframe_index * N_t_slot * N_RA_slot * fdm + N_RA_slot_index * N_t_slot * fdm + freq_index + fdm * start_symbol_index;
   prach_occasion_id =
       (((frameP % (cc->max_association_period * config_period)) / config_period) * cc->total_prach_occasions_per_config_period)
@@ -809,7 +809,8 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   int slots_frame = nr_mac->frame_structure.numb_slots_frame;
   uint16_t K2 = *pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
-  const int sched_slot = (slot + K2) % slots_frame;
+  //const int sched_slot = (slot + K2) % slots_frame;
+  const int sched_slot = 18 % slots_frame; // FIXME: confirm
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
