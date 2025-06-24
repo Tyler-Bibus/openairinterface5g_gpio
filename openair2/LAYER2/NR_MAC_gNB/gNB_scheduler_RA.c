@@ -111,7 +111,7 @@ static int16_t ssb_index_from_prach(module_id_t module_idP,
     if((mu == 1) || (mu == 3))
       slot_index = 0; // For scs = 30khz and 120khz
   }
-  int config_period = cc->prach_info.x; // TODO tyler; Is this the diff 1?
+  int config_period = cc->prach_info.x;
   //  prach_occasion_id = subframe_index * N_t_slot * N_RA_slot * fdm + N_RA_slot_index * N_t_slot * fdm + freq_index + fdm * start_symbol_index;
   prach_occasion_id =
       (((frameP % (cc->max_association_period * config_period)) / config_period) * cc->total_prach_occasions_per_config_period)
