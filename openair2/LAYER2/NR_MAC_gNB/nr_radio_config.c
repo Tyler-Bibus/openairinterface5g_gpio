@@ -1118,7 +1118,8 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
       ul_symb = p1->nrofUplinkSymbols;
     }
     if (ul_symb>1) {
-      // UL TDA index 2 for mixed slot (TDD)
+      // UL TDA index 2 for mixed slot (TDD) 
+      //FIXME: UL TDA for non-mixed slot (Maybe remove eveything in/after this if branch? reconfigure to initially use hardcoded vals, then incorporate into config?)
       asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
                   set_TimeDomainResourceAllocation(k2, 2, ul_symb));
     }
