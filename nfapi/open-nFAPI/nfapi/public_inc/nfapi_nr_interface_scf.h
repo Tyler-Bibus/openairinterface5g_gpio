@@ -24,7 +24,7 @@
 #define NFAPI_MAX_NUM_GROUPS 8
 #define NFAPI_MAX_NUM_CB 8
 #define NFAPI_MAX_NUM_PRGS 1
-#define NFAPI_MAX_NUM_BG_IF 1
+#define NFAPI_MAX_NUM_BG_IF 6
 #define NFAPI_MAX_NUM_PERIODS 8
 
 // Extension to the generic structures for single tlv values
@@ -328,6 +328,8 @@ typedef struct
 
 #define NFAPI_NR_CONFIG_RSSI_MEASUREMENT_TAG 0x1028
 #define NFAPI_NR_CONFIG_TDD_TABLE 0x1035
+#define NFAPI_NR_CONFIG_BEAMFORMING_TABLE_TAG 0x1043 // This tag was added in version 5 of the SCF222 standard ( Table 3-50 of SCF222.10.05 )
+#define NFAPI_NR_CONFIG_PRECODING_TABLE_V6_TAG 0x104B // This tag was added in version 6 of the SCF222 standard ( Table 3-52 of SCF222.10.06 )
 
 //table 3-21
 typedef struct 
@@ -473,6 +475,11 @@ typedef struct {
   nfapi_nr_dig_beam_t *dig_beam_list;
 } nfapi_nr_dbt_pdu_t;
 
+typedef struct {
+  nfapi_tl_t tl;
+  nfapi_nr_dbt_pdu_t value;
+} nfapi_nr_dbt_tlv_ve_t;
+
 // Table 3–62 Precoding matrix (PM) PDU (v.222.10.04)
 typedef struct {
   int16_t precoder_weight_Re;
@@ -491,11 +498,18 @@ typedef struct {
 typedef struct {
   uint16_t num_pm_idx;
   nfapi_nr_pm_pdu_t *pmi_pdu;
-} nfapi_nr_pm_list_t;
+} nfapi_nr_pm_list_t; // This corresponds to Table 3-69 of SCF222.10.06, which introduces the num_pm_idx parameter
+
+typedef struct {
+  nfapi_tl_t tl;
+  nfapi_nr_pm_list_t value;
+} nfapi_nr_pm_tlv_ve_t;
 
 typedef struct {
   nfapi_uint8_tlv_t num_beams_period_vendor_ext;
   nfapi_uint8_tlv_t analog_bf_vendor_ext;
+  nfapi_uint8_tlv_t total_num_beams_vendor_ext;
+  nfapi_uint8_tlv_t *analog_beam_list;
 } nfapi_nr_analog_beamforming_ve_t;
 
 // ERROR enums
@@ -1829,7 +1843,7 @@ typedef struct {
   uint8_t num_symbols;                  // Number of symbols for SRS. Value: 1 -> 4. If a PHY does not report for individual symbols then this parameter should be set to 1.
   uint8_t wide_band_snr;                // SNR value in dB measured within configured SRS bandwidth on each symbol. Value: 0 -> 255 representing -64 dB to 63 dB with a step size 0.5 dB. 0xff will be set if this field is invalid.
   uint8_t num_reported_symbols;         // Number of symbols reported in this message. This allows PHY to report individual symbols or aggregated symbols where this field will be set to 1. Value: 1 -> 4.
-  nfapi_nr_srs_reported_symbol_t* reported_symbol_list;
+  nfapi_nr_srs_reported_symbol_t reported_symbol_list[4];
 } nfapi_nr_srs_beamforming_report_t;
 
 // SRS indication
