@@ -2288,6 +2288,7 @@ void nr_schedule_RA(module_id_t module_idP,
 
       switch (ra->ra_state) {
         case nrRA_Msg2:
+          // Consider this switch location to modify Msg2 Frame location...
           nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
           break;
         case nrRA_Msg3_retransmission:
