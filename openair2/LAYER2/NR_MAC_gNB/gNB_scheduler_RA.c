@@ -814,7 +814,7 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   uint16_t K2 = *pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
   //const int sched_slot = (slot + K2) % slots_frame;
-  const int sched_slot = 18 % slots_frame; // FIXME: confirm
+  const int sched_slot = 18 % slots_frame; // This will schedule msg3 to be in the second to last slot (HARDCODED 5ms frame perior)
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
@@ -1061,6 +1061,13 @@ static bool nr_get_Msg3alloc(gNB_MAC_INST *mac, int CC_id, int current_slot, fra
   int startSymbolAndLength = pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->startSymbolAndLength;
   SLIV2SL(startSymbolAndLength, &ra->msg3_startsymb, &ra->msg3_nbSymb);
 
+  // RA DIFF 3 goes here. Something like this? (HARDCODED, we could calculate/pull from config later.)
+  /*
+  ra->msg3_startsymb = 0; //symbol we want to start on.
+  ra->msg3_nbSymb = 14; // number of symbols.
+  ra->Msg3_slot = 8; // Hardcoded to be frst UL slot for DDDDDDDSUU
+  */
+
   const int buffer_index = ul_buffer_index(ra->Msg3_frame,
                                            ra->Msg3_slot,
                                            mac->frame_structure.numb_slots_frame,
@@ -1075,6 +1082,8 @@ static bool nr_get_Msg3alloc(gNB_MAC_INST *mac, int CC_id, int current_slot, fra
     if (!((bwpStart >= act_bwp_start) && ((bwpStart+bwpSize) <= (act_bwp_start+act_bwp_size))))
       bwpStart = act_bwp_start;
   }
+
+  // RA DIFF 3 goes here somewhere... We need to ensure that Msg3 Max symbols is 14 and start_symbol is 0.
 
   /* search msg3_nb_rb free RBs */
   int rbSize = 0;
