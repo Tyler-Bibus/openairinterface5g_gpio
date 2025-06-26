@@ -1133,13 +1133,22 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     int ul_slots = 2;  // Number of UL slots (UU)
     int total_slots = dl_slots + s_slot + ul_slots;
 
+    // length HARDCODED HERE
+    int start_symb = 0;
+    int length_symb = 13;
+
     struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = CALLOC(1, sizeof(struct NR_PUSCH_TimeDomainResourceAllocation));
     puschTdrAllocMsg3->k2 = CALLOC(1, sizeof(long));
     *puschTdrAllocMsg3->k2 = total_slots - 1;
+
+    puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might not be correct now.
+
+    puschTdrAllocMsg3->startSymbolAndLength = get_SLIV(start_symb, length_symb);
+
     AssertFatal(*puschTdrAllocMsg3->k2 < 33,
                 "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
                 *puschTdrAllocMsg3->k2);
-                
+
     asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
 
     /*
