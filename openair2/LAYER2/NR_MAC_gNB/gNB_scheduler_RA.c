@@ -813,8 +813,9 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   int slots_frame = nr_mac->frame_structure.numb_slots_frame;
   uint16_t K2 = *pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
-  //const int sched_slot = (slot + K2) % slots_frame;
+  // const int sched_slot = (slot + K2) % slots_frame;
   const int sched_slot = 18 % slots_frame; // This will schedule msg3 to be in the second to last slot (HARDCODED 5ms frame perior)
+  // TODO find a new way to calculate this, to prevent it from being purely hardcoded.
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
@@ -2289,7 +2290,34 @@ void nr_schedule_RA(module_id_t module_idP,
       switch (ra->ra_state) {
         case nrRA_Msg2:
           // Consider this switch location to modify Msg2 Frame location...
-          nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
+          /* // OLD METHOD
+            nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
+          */
+
+          // FIXME: Consider possibly changing approach:
+          // 1. If it is a dl slot but NOT as ul slot (Pure DL slot), then send msg 2.
+          // 2. Then dynamically calculate when UE should respond with msg3?
+          // This would mean we can send msg2 sooner, at the cost of dynamically changing k
+          
+          // NEW METHOD -> insures we only need ONE k value, and not dynamically change depending on what slot we send msg2
+          // We will check if we are in a pure dl slot, and if we are, send msg2, else wait
+          // Potential issue -> we might delay too long and have UE release..
+          // Might need to pull fs into function as well.
+
+          bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
+          bool is_next_slot_ul = is_ul_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
+          bool is_next_slot_dl = is_dl_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
+          bool is_next_slot_special = (is_next_slot_dl && is_next_slot_ul); // special slot is both dl and ul
+
+          // If current is DL, and next is Special, send msg 2
+
+          if(is_current_slot_dl && is_next_slot_special){
+            LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotPs);
+            nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
+          }
+
+          // If not slot, delay msg2 until ready.
+
           break;
         case nrRA_Msg3_retransmission:
           nr_generate_Msg3_retransmission(module_idP, CC_id, frameP, slotP, UE, ul_dci_req);
