@@ -2312,7 +2312,7 @@ void nr_schedule_RA(module_id_t module_idP,
           // If current is DL, and next is Special, send msg 2
 
           if(is_current_slot_dl && is_next_slot_special){
-            LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotPs);
+            LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
             nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
           }
 
