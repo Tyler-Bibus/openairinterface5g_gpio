@@ -2305,13 +2305,13 @@ void nr_schedule_RA(module_id_t module_idP,
           // Might need to pull fs into function as well.
 
           bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
-          bool is_next_slot_ul = is_ul_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
-          bool is_next_slot_dl = is_dl_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
-          bool is_next_slot_special = (is_next_slot_dl && is_next_slot_ul); // special slot is both dl and ul
+          bool is_current_slot_ul = is_ul_slot(slotP, &mac->frame_structure); // confirm this is valid
+          //bool is_next_slot_dl = is_dl_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
+         // bool is_next_slot_special = (is_next_slot_dl && is_next_slot_ul); // special slot is both dl and ul
 
           // If current is DL, and next is Special, send msg 2
 
-          if(is_current_slot_dl && is_next_slot_special){
+          if(is_current_slot_dl && !is_current_slot_ul){
             LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
             nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
           }

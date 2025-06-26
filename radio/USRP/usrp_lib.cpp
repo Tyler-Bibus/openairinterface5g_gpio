@@ -332,7 +332,7 @@ static int trx_usrp_start(openair0_device *device) {
   // set bits to be controlled by ATR
   s->usrp->set_gpio_attr(s->gpio_bank, "CTRL", 0x7f, 0x7f);
   // set bits to 1 when radio is transmitting AND reciving (PA control)
-  s->usrp->set_gpio_attr(s->gpio_bank, "ATR_xx", 0x7f, 0x7f);
+  s->usrp->set_gpio_attr(s->gpio_bank, "ATR_XX", 0x7f, 0x7f);
 
 
   s->wait_for_first_pps = 1;

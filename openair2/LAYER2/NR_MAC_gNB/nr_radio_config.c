@@ -1126,6 +1126,23 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     }
     // UL TDA index 3 for msg3 in the mixed slot (TDD)
     // FIXME (tyler): insert new patch for msg3 in NON-MIXED slot!!!
+
+    // New UL TDA index: Msg3 scheduled in the first UL slot in every TDD period - Joshua
+    int dl_slots = 7;  // Number of DL slots (DDDDDDD)
+    int s_slot = 1;    // One special slot (S)
+    int ul_slots = 2;  // Number of UL slots (UU)
+    int total_slots = dl_slots + s_slot + ul_slots;
+
+    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = CALLOC(1, sizeof(struct NR_PUSCH_TimeDomainResourceAllocation));
+    puschTdrAllocMsg3->k2 = CALLOC(1, sizeof(long));
+    *puschTdrAllocMsg3->k2 = total_slots - 1;
+    AssertFatal(*puschTdrAllocMsg3->k2 < 33,
+                "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
+                *puschTdrAllocMsg3->k2);
+                
+    asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
+
+    /*
     int tdd_period_idx = get_tdd_period_idx(scc->tdd_UL_DL_ConfigurationCommon);
     int nb_periods_per_frame = get_nb_periods_per_frame(tdd_period_idx);
     int nb_slots_per_period = ((1 << mu) * 10) / nb_periods_per_frame;
@@ -1137,6 +1154,7 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
                 "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
                 *puschTdrAllocMsg3->k2);
     asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
+    */
   }
 }
 
