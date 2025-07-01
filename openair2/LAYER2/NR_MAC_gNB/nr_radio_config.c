@@ -1118,12 +1118,12 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     } else if (p2) {
       ul_symb = p1->nrofUplinkSymbols;
     }
-    if (ul_symb>1) {
+    //if (ul_symb>1) {
       // UL TDA index 2 for mixed slot (TDD) 
       //FIXME: UL TDA for non-mixed slot (Maybe remove eveything in/after this if branch? reconfigure to initially use hardcoded vals, then incorporate into config?)
-      asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
-                  set_TimeDomainResourceAllocation(k2, 2, ul_symb));
-    }
+      //asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
+      //            set_TimeDomainResourceAllocation(k2, 2, ul_symb));
+    //}
     // UL TDA index 3 for msg3 in the mixed slot (TDD)
     // FIXME (tyler): insert new patch for msg3 in NON-MIXED slot!!!
 
@@ -1137,11 +1137,12 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     int start_symb = 0;
     int length_symb = 13;
 
-    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = CALLOC(1, sizeof(struct NR_PUSCH_TimeDomainResourceAllocation));
-    puschTdrAllocMsg3->k2 = CALLOC(1, sizeof(long));
-    *puschTdrAllocMsg3->k2 = total_slots - 1;
+    //struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = CALLOC(1, sizeof(struct NR_PUSCH_TimeDomainResourceAllocation));
+    //puschTdrAllocMsg3->k2 = CALLOC(1, sizeof(long));
+    //*puschTdrAllocMsg3->k2 = total_slots - 1;
 
-    puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might not be correct now.
+    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(total_slots - 1, 3, 14); // I believe this shifts the slot... maybe not number symbols though
+   // puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might not be correct now.
 
     puschTdrAllocMsg3->startSymbolAndLength = get_SLIV(start_symb, length_symb);
 
