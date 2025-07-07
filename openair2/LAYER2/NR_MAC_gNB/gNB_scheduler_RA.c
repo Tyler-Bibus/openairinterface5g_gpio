@@ -2280,7 +2280,7 @@ void nr_schedule_RA(module_id_t module_idP,
 
       switch (ra->ra_state) {
         case nrRA_Msg2:
-          
+          LOG_E(NR_MAC, "UE %04x frame.slot %d.%d: Attempting to schedule Msg2...", UE->rnti, frameP, slotP);
           // NEW METHOD -> insures we only need ONE k value, and not dynamically change depending on what slot we send msg2
           // Might want to change it to be defined by config?
           bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
