@@ -2288,7 +2288,8 @@ void nr_schedule_RA(module_id_t module_idP,
 
           // If current is DL, but not special, send msg2
           if(is_current_slot_dl && !is_current_slot_ul){
-            LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
+            // Elevating Log to see if UE makes it this far
+            LOG_E(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
             nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
           }
           // If not correct slot, delay msg2 until ready.
