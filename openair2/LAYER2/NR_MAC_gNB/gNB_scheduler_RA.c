@@ -813,9 +813,8 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   int slots_frame = nr_mac->frame_structure.numb_slots_frame;
   uint16_t K2 = *pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
-  // const int sched_slot = (slot + K2) % slots_frame;
-  const int sched_slot = 18 % slots_frame; // This will schedule msg3 to be in the second to last slot (HARDCODED 5ms frame perior)
-  // TODO find a new way to calculate this, to prevent it from being purely hardcoded.
+  const int sched_slot = (slot + K2) % slots_frame; // instead of hardcoded, use dynamic function
+  // FIXME: confirm this is working properly
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
