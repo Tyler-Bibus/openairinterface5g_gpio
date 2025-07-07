@@ -1062,13 +1062,6 @@ static bool nr_get_Msg3alloc(gNB_MAC_INST *mac, int CC_id, int current_slot, fra
   int startSymbolAndLength = pusch_TimeDomainAllocationList->list.array[ra->Msg3_tda_id]->startSymbolAndLength;
   SLIV2SL(startSymbolAndLength, &ra->msg3_startsymb, &ra->msg3_nbSymb);
 
-  // RA DIFF 3 goes here. Something like this? (HARDCODED, we could calculate/pull from config later.)
-  /*
-  ra->msg3_startsymb = 0; //symbol we want to start on.
-  ra->msg3_nbSymb = 14; // number of symbols.
-  ra->Msg3_slot = 8; // Hardcoded to be frst UL slot for DDDDDDDSUU
-  */
-
   const int buffer_index = ul_buffer_index(ra->Msg3_frame,
                                            ra->Msg3_slot,
                                            mac->frame_structure.numb_slots_frame,
@@ -1084,7 +1077,6 @@ static bool nr_get_Msg3alloc(gNB_MAC_INST *mac, int CC_id, int current_slot, fra
       bwpStart = act_bwp_start;
   }
 
-  // RA DIFF 3 goes here somewhere... We need to ensure that Msg3 Max symbols is 14 and start_symbol is 0.
 
   /* search msg3_nb_rb free RBs */
   int rbSize = 0;
@@ -2289,34 +2281,18 @@ void nr_schedule_RA(module_id_t module_idP,
 
       switch (ra->ra_state) {
         case nrRA_Msg2:
-          // Consider this switch location to modify Msg2 Frame location...
-          /* // OLD METHOD
-            nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
-          */
-
-          // FIXME: Consider possibly changing approach:
-          // 1. If it is a dl slot but NOT as ul slot (Pure DL slot), then send msg 2.
-          // 2. Then dynamically calculate when UE should respond with msg3?
-          // This would mean we can send msg2 sooner, at the cost of dynamically changing k
           
           // NEW METHOD -> insures we only need ONE k value, and not dynamically change depending on what slot we send msg2
-          // We will check if we are in a pure dl slot, and if we are, send msg2, else wait
-          // Potential issue -> we might delay too long and have UE release..
-          // Might need to pull fs into function as well.
-
+          // Might want to change it to be defined by config?
           bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
-          bool is_current_slot_ul = is_ul_slot(slotP, &mac->frame_structure); // confirm this is valid
-          //bool is_next_slot_dl = is_dl_slot(slotP + 1, &mac->frame_structure); // confirm this is valid
-         // bool is_next_slot_special = (is_next_slot_dl && is_next_slot_ul); // special slot is both dl and ul
+          bool is_current_slot_ul = is_ul_slot(slotP, &mac->frame_structure); 
 
-          // If current is DL, and next is Special, send msg 2
-
+          // If current is DL, but not special, send msg2
           if(is_current_slot_dl && !is_current_slot_ul){
             LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
             nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
           }
-
-          // If not slot, delay msg2 until ready.
+          // If not correct slot, delay msg2 until ready.
 
           break;
         case nrRA_Msg3_retransmission:

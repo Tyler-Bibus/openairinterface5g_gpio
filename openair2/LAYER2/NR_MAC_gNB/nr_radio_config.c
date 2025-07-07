@@ -1041,7 +1041,7 @@ void nr_rrc_config_dl_tda(struct NR_PDSCH_TimeDomainResourceAllocationList *pdsc
         // mixed slot TDA with TDA index 2
         struct NR_PDSCH_TimeDomainResourceAllocation *timedomainresourceallocation2 = CALLOC(1,sizeof(NR_PDSCH_TimeDomainResourceAllocation_t));
         timedomainresourceallocation2->mappingType = NR_PDSCH_TimeDomainResourceAllocation__mappingType_typeA;
-        // FIXME: hardcoded TDA DL (msg2?) on line below, potentially will want to move to config file or calculate..
+        // FIXME: hardcoded TDA DL on line below, potentially will want to move to config file or calculate..
         timedomainresourceallocation2->startSymbolAndLength = get_SLIV(1,5); // mixed slot configuration starting in symbol 1 til the end of the dl allocation
         asn1cSeqAdd(&pdsch_TimeDomainAllocationList->list, timedomainresourceallocation2);
       }
@@ -1118,15 +1118,8 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     } else if (p2) {
       ul_symb = p1->nrofUplinkSymbols;
     }
-    //if (ul_symb>1) {
-      // UL TDA index 2 for mixed slot (TDD) 
-      //FIXME: UL TDA for non-mixed slot (Maybe remove eveything in/after this if branch? reconfigure to initially use hardcoded vals, then incorporate into config?)
-      //asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
-      //            set_TimeDomainResourceAllocation(k2, 2, ul_symb));
-    //}
-    // UL TDA index 3 for msg3 in the mixed slot (TDD)
-    // FIXME (tyler): insert new patch for msg3 in NON-MIXED slot!!!
 
+    // FIXME, pull this from config.
     // New UL TDA index: Msg3 scheduled in the first UL slot in every TDD period - Joshua
     int dl_slots = 7;  // Number of DL slots (DDDDDDD)
     int s_slot = 1;    // One special slot (S)
@@ -1137,34 +1130,16 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     int start_symb = 0;
     int length_symb = 13;
 
-    //struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = CALLOC(1, sizeof(struct NR_PUSCH_TimeDomainResourceAllocation));
-    //puschTdrAllocMsg3->k2 = CALLOC(1, sizeof(long));
-    //*puschTdrAllocMsg3->k2 = total_slots - 1;
 
-    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(total_slots - 1, 3, 14); // I believe this shifts the slot... maybe not number symbols though
-   // puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might not be correct now.
+    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(total_slots - 1, 3, 14); 
+   // puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might be needed?
 
     puschTdrAllocMsg3->startSymbolAndLength = get_SLIV(start_symb, length_symb);
-
     AssertFatal(*puschTdrAllocMsg3->k2 < 33,
                 "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
                 *puschTdrAllocMsg3->k2);
 
     asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
-
-    /*
-    int tdd_period_idx = get_tdd_period_idx(scc->tdd_UL_DL_ConfigurationCommon);
-    int nb_periods_per_frame = get_nb_periods_per_frame(tdd_period_idx);
-    int nb_slots_per_period = ((1 << mu) * 10) / nb_periods_per_frame;
-    int k2_msg3 = nb_slots_per_period - get_delta_for_k2(mu);
-    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(k2_msg3, 3, ul_symb);
-    if (*puschTdrAllocMsg3->k2 < min_fb_delay)
-      *puschTdrAllocMsg3->k2 += nb_slots_per_period;
-    AssertFatal(*puschTdrAllocMsg3->k2 < 33,
-                "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
-                *puschTdrAllocMsg3->k2);
-    asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
-    */
   }
 }
 
