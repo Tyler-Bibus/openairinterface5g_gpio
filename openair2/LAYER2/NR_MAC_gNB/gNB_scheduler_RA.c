@@ -747,6 +747,8 @@ void nr_initiate_ra_proc(module_id_t module_idP,
   ra->timing_offset = timing_offset;
   ra->msg3_TPC = nr_get_msg3_tpc(preamble_power);
 
+  LOG_E(NR_MAC, "UE %04x frame.slot %d.%d: initiating RA procedure", UE->rnti, frame, slot);
+
   NR_COMMON_channels_t *cc = &nr_mac->common_channels[CC_id];
   NR_ServingCellConfigCommon_t *scc = cc->ServingCellConfigCommon;
   // 3GPP TS 38.321 Section 5.1.3(a) says t_id for RA-RNTI depends on mu as specified in clause 5.3.2 in TS 38.211
