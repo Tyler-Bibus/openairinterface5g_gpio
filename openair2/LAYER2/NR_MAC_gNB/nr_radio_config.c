@@ -1120,6 +1120,12 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
       ul_symb = p1->nrofUplinkSymbols;
     }
 
+        if (ul_symb>1) {
+      // UL TDA index 2 for mixed slot (TDD)
+      asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
+                  set_TimeDomainResourceAllocation(k2, 2, ul_symb));
+    }
+
     // FIXME, pull this from config.
     // New UL TDA index: Msg3 scheduled in the first UL slot in every TDD period - Joshua
     int dl_slots = 7;  // Number of DL slots (DDDDDDD)
