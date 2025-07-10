@@ -806,7 +806,10 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   uint16_t K2 = tda_info.k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
   // const int sched_slot = (slot + K2) % slots_frame;
-  const int sched_slot = 18 % slots_frame; // This will schedule msg3 to be in the second to last slot (HARDCODED 5ms frame perior)
+  int downlink_slots_period = scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofDownlinkSlots;
+  int uplink_slots_period = scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofUplinkSlots;
+  int total_slots_period = 1 + downlink_slots_period + uplink_slots_period; // Special Slot + Num DL + Num UL
+  const int sched_slot = (total_slots_period*2 - uplink_slots_period) % slots_frame; // Schedules
   // TODO find a new way to calculate this, to prevent it from being purely hardcoded.
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
@@ -2173,19 +2176,9 @@ void nr_schedule_RA(module_id_t module_idP,
 
       switch (ra->ra_state) {
         case nrRA_Msg2:
-          
-          // NEW METHOD -> insures we only need ONE k value, and not dynamically change depending on what slot we send msg2
-          // Might want to change it to be defined by config?
-          bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
-          bool is_current_slot_ul = is_ul_slot(slotP, &mac->frame_structure); 
-
-          // If current is DL, but not special, send msg2
-          if(is_current_slot_dl && !is_current_slot_ul){
+        // Msg2 will be moved to slot 6, as required by the TDA for msg3!
             LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
             nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
-          }
-          // If not correct slot, delay msg2 until ready.
-
           break;
         case nrRA_Msg3_retransmission:
           nr_generate_Msg3_retransmission(module_idP, CC_id, frameP, slotP, UE, ul_dci_req);

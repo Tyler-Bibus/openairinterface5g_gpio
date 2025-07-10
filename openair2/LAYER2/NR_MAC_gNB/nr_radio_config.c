@@ -1120,26 +1120,20 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
       ul_symb = p1->nrofUplinkSymbols;
     }
 
-        if (ul_symb>1) {
+    if (ul_symb>1) {
       // UL TDA index 2 for mixed slot (TDD)
       asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
                   set_TimeDomainResourceAllocation(k2, 2, ul_symb));
     }
 
-    // FIXME, pull this from config.
-    // New UL TDA index: Msg3 scheduled in the first UL slot in every TDD period - Joshua
-    int dl_slots = 7;  // Number of DL slots (DDDDDDD)
-    int s_slot = 1;    // One special slot (S)
-    int ul_slots = 2;  // Number of UL slots (UU)
-    int total_slots = dl_slots + s_slot + ul_slots;
+    int tdd_period_idx = get_tdd_period_idx(scc->tdd_UL_DL_ConfigurationCommon);
+    int nb_periods_per_frame = get_nb_periods_per_frame(tdd_period_idx);
+    int nb_slots_per_period = ((1 << mu) * 10) / nb_periods_per_frame;
+    int k2_msg3 = nb_slots_per_period - 1;
 
-    // length HARDCODED HERE
-    int start_symb = 0;
-    int length_symb = 13;
-
-
-    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(total_slots - 1, 3, 14); 
-   // puschTdrAllocMsg3->mappingType = NR_PUSCH_TimeDomainResourceAllocation-_mappingType_typeA; // Might be needed?
+    struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(k2_msg3, 3, 14);
+    if (*puschTdrAllocMsg3->k2 < min_fb_delay)
+      *puschTdrAllocMsg3->k2 += nb_slots_per_period;
 
     puschTdrAllocMsg3->startSymbolAndLength = get_SLIV(start_symb, length_symb);
     AssertFatal(*puschTdrAllocMsg3->k2 < 33,
