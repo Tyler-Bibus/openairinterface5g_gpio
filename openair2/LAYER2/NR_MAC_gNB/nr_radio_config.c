@@ -1135,6 +1135,10 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
     if (*puschTdrAllocMsg3->k2 < min_fb_delay)
       *puschTdrAllocMsg3->k2 += nb_slots_per_period;
 
+    // length HARDCODED HERE
+    int start_symb = 0;
+    int length_symb = 13;
+
     puschTdrAllocMsg3->startSymbolAndLength = get_SLIV(start_symb, length_symb);
     AssertFatal(*puschTdrAllocMsg3->k2 < 33,
                 "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
