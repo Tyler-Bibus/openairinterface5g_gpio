@@ -806,11 +806,11 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   uint16_t K2 = tda_info.k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
   // const int sched_slot = (slot + K2) % slots_frame;
-  int downlink_slots_period = scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofDownlinkSlots;
-  int uplink_slots_period = scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofUplinkSlots;
-  int total_slots_period = 1 + downlink_slots_period + uplink_slots_period; // Special Slot + Num DL + Num UL
-  const int sched_slot = (total_slots_period*2 - uplink_slots_period) % slots_frame; // Schedules
-  // TODO find a new way to calculate this, to prevent it from being purely hardcoded.
+  int msg2_slot = scc->tdd_UL_DL_ConfigurationCommon->pattern1.msg2_slot;
+  int k2_value = scc->tdd_UL_DL_ConfigurationCommon->pattern1.k2;
+  const int sched_slot = (msg2_slot + k2_value + 3) % slots_frame; // Schedules
+  LOG_E(NR_MAC, "Msg2: %d, K2: %d, Msg3: %d\n", msg2_slot, k2_value, sched_frame);
+  // Calculated with msg2_slot (config) + k2 (config) + 3 (index 3)
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
@@ -2170,7 +2170,7 @@ void nr_schedule_RA(module_id_t module_idP,
             requested = nr_mac_request_release_ue(mac, UE->rnti);
           if (!requested)
             nr_release_ra_UE(mac, UE->rnti);
-          continue;
+          continue; 
         }
       }
 
