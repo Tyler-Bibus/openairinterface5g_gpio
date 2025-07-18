@@ -293,6 +293,9 @@ typedef struct {
   /// Max prach length in slots
   int prach_len;
   nr_prach_info_t prach_info;
+  // Added for scheduler config
+  int msg2_slot;
+  int k2;
 } NR_COMMON_channels_t;
 
 // SP ZP CSI-RS Resource Set Activation/Deactivation MAC CE
