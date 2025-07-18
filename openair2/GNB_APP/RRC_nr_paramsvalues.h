@@ -251,8 +251,6 @@
 {GNB_CONFIG_STRING_NROFDOWNLINKSLOTS,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofDownlinkSlots,.defint64val=7,TYPE_INT64,0},\
 {GNB_CONFIG_STRING_NROFDOWNLINKSYMBOLS,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofDownlinkSymbols,.defint64val=6,TYPE_INT64,0},\
 {GNB_CONFIG_STRING_NROFUPLINKSLOTS,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofUplinkSlots,.defint64val=2,TYPE_INT64,0},\
-{GNB_CONFIG_STRING_MSG2_SLOT,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.msg2_slot,.defint64val=6,TYPE_INT64,0},\
-{GNB_CONFIG_STRING_K2,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.k2,.defint64val=9,TYPE_INT64,0},\
 {GNB_CONFIG_STRING_NROFUPLINKSYMBOLS,NULL,0,.i64ptr=&scc->tdd_UL_DL_ConfigurationCommon->pattern1.nrofUplinkSymbols,.defint64val=4,TYPE_INT64,0},\
 {GNB_CONFIG_STRING_SSPBCHBLOCKPOWER,NULL,0,.i64ptr=&scc->ss_PBCH_BlockPower,.defint64val=20,TYPE_INT64,0}, \
 {GNB_CONFIG_STRING_ULSYNCVALIDITYDURATION,NULL,0,.i64ptr=scc->ext2->ntn_Config_r17->ntn_UlSyncValidityDuration_r17,.defint64val=0,TYPE_INT64,0}, \

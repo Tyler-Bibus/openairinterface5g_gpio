@@ -405,8 +405,14 @@ static void config_common(gNB_MAC_INST *nrmac,
 {
   nfapi_nr_config_request_scf_t *cfg = &nrmac->config[0];
   nrmac->common_channels[0].ServingCellConfigCommon = scc;
-  nrmac->common_channels[0].msg2_slot = 6; // TODO: set from config
-  nrmac->common_channels[0].k2 = 10; // TODO: set from config
+  // Read msg2_slot and k2 from config struct if available
+  if (config) {
+    nrmac->common_channels[0].msg2_slot = config->msg2_slot;
+    nrmac->common_channels[0].k2 = config->k2;
+  } else {
+    nrmac->common_channels[0].msg2_slot = 6; // fallback default
+    nrmac->common_channels[0].k2 = 10; // fallback default
+  }
 
   // Carrier configuration
   struct NR_FrequencyInfoDL *frequencyInfoDL = scc->downlinkConfigCommon->frequencyInfoDL;

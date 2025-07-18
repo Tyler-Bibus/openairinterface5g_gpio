@@ -118,6 +118,8 @@ typedef enum {
 #define GNB_CONFIG_STRING_PDSCHANTENNAPORTS_XP          "pdsch_AntennaPorts_XP"
 #define GNB_CONFIG_STRING_PUSCHANTENNAPORTS             "pusch_AntennaPorts"
 #define GNB_CONFIG_STRING_SIB1TDA                       "sib1_tda"
+#define GNB_CONFIG_STRING_MSG2_SLOT                     "msg2_slot"
+#define GNB_CONFIG_STRING_K2                            "k2"
 #define GNB_CONFIG_STRING_DOCSIRS                       "do_CSIRS"
 #define GNB_CONFIG_STRING_DOSRS                         "do_SRS"
 #define GNB_CONFIG_STRING_NRCELLID                      "nr_cellid"
@@ -202,6 +204,8 @@ typedef enum {
 {GNB_CONFIG_STRING_CU_SIB_LIST,                  GNB_CONFIG_HLP_CU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DU_SIB_LIST,                  GNB_CONFIG_HLP_DU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DOSINR,      GNB_CONFIG_HLP_DOSINR,   0,            .iptr=NULL,  .defintval=0,                 TYPE_INT,       0},  \
+{GNB_CONFIG_STRING_MSG2_SLOT,                    NULL,   0,            .iptr=NULL,  .defintval=0,                 TYPE_INT,       0},  \
+{GNB_CONFIG_STRING_K2,                           NULL,   0,            .iptr=NULL,  .defintval=6,                 TYPE_INT,       0},  \
 }
 // clang-format on
 
@@ -245,6 +249,8 @@ typedef enum {
 #define GNB_CU_SIBS_IDX                 36
 #define GNB_DU_SIBS_IDX                 37
 #define GNB_DO_SINR_IDX                 38
+#define GNB_MSG2_SLOT_IDX               39
+#define GNB_K2_IDX                      40
 
 #define TRACKING_AREA_CODE_OKRANGE {0x0001,0xFFFD}
 #define NUM_DL_HARQ_OKVALUES {2,4,6,8,10,12,16,32}
