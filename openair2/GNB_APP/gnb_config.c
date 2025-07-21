@@ -1075,6 +1075,13 @@ static void set_antenna_ports(paramlist_def_t *p, int *N1, int *N2, int *XP)
   *XP = *p->paramarray[0][GNB_PDSCH_ANTENNAPORTS_XP_IDX].iptr;
 }
 
+// Set msg2_slot and k2 from config
+static void set_common_channels_config(paramlist_def_t *p, int *msg2_slot, int *k2)
+{
+  *msg2_slot = *p->paramarray[0][GNB_MSG2_SLOT_IDX].iptr;
+  *k2 = *p->paramarray[0][GNB_K2_IDX].iptr;
+}
+
 void RCconfig_NR_L1(void)
 {
   LOG_I(NR_PHY, "Initializing NR L1: RC.nb_nr_L1_inst = %d\n", RC.nb_nr_L1_inst);
@@ -1100,6 +1107,8 @@ void RCconfig_NR_L1(void)
 
       // Antenna ports
       set_antenna_ports(&GNBParamList, &gNB->ap_N1, &gNB->ap_N2, &gNB->ap_XP);
+      // Common channels config
+      set_common_channels_config(&GNBParamList, &gNB->common_channels[0].msg2_slot, &gNB->common_channels[0].k2);
     }
 
     // L1 params
