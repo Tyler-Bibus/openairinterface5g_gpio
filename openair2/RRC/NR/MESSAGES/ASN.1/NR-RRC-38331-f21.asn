@@ -3076,6 +3076,7 @@ TDD-UL-DL-Pattern ::= 				SEQUENCE {
 	nrofDownlinkSymbols					INTEGER (0..maxNrofSymbols-1),
 	nrofUplinkSlots						INTEGER (0..maxNrofSlots),
 	nrofUplinkSymbols					INTEGER (0..maxNrofSymbols-1),
+	msg2_slot							INTEGER (0..255),
 	...
 }
 
