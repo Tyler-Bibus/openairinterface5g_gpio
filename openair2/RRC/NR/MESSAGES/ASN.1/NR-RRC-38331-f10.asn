@@ -4412,7 +4412,10 @@ TDD-UL-DL-ConfigCommon ::=			SEQUENCE {
 	-- Number of consecutive UL symbols in the end of the slot preceding the first full UL slot (as derived from nrofUplinkSlots).
 	-- If the field is absent or released, there is no partial-uplink slot.
 	-- Corresponds to L1 parameter 'number-of-UL-symbols-common' (see 38.211, section FFS_Section)
-	nrofUplinkSymbols					INTEGER (0..maxNrofSymbols-1)															OPTIONAL	-- Need R
+	nrofUplinkSymbols					INTEGER (0..maxNrofSymbols-1)															OPTIONAL,	-- Need R
+
+	-- FIXME this is a new variable to control for msg2 and msg3
+	msg2_slot							INTEGER (0..255) 																		OPTIONAL
 }
 
 TDD-UL-DL-ConfigDedicated ::=		SEQUENCE {

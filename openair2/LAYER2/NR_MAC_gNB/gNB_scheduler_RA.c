@@ -807,7 +807,7 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
   // const int sched_slot = (slot + K2) % slots_frame;
   int msg2_slot = scc->tdd_UL_DL_ConfigurationCommon->pattern1.msg2_slot;
-  int k2_value = scc->tdd_UL_DL_ConfigurationCommon->pattern1.k2;
+  int k2_value = 10; // scc->tdd_UL_DL_ConfigurationCommon->pattern1.k2;
   const int sched_slot = (msg2_slot + k2_value + 3) % slots_frame; // Schedules
   LOG_E(NR_MAC, "Msg2: %d, K2: %d, Msg3: %d\n", msg2_slot, k2_value, sched_frame);
   // Calculated with msg2_slot (config) + k2 (config) + 3 (index 3)

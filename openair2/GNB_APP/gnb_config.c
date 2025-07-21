@@ -426,7 +426,7 @@ void fill_scc_sim(NR_ServingCellConfigCommon_t *scc, uint64_t *ssb_bitmap, int N
   p1->nrofUplinkSlots = 2;
   p1->nrofUplinkSymbols = 4;
   p1->msg2_slot = 6;
-  p1->k2 = 10;
+  // p1->k2 = 10;
 
   struct NR_TDD_UL_DL_Pattern *p2 = tdd_UL_DL_Config->pattern2;
   if (p2) {
