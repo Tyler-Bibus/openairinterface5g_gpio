@@ -159,6 +159,8 @@ typedef struct nr_mac_config_t {
   int sib1_tda;
   nr_pdsch_AntennaPorts_t pdsch_AntennaPorts;
   int pusch_AntennaPorts;
+  int ms2_slot;
+  int k2_value;
   int minRXTXTIME;
   int do_CSIRS;
   int do_SRS;
@@ -836,6 +838,9 @@ typedef struct gNB_MAC_INST_s {
   /// Subcarrier Offset
   int                             ssb_SubcarrierOffset;
   int                             ssb_OffsetPointA;
+  /// Scheduling
+  int                             msg2_slot;
+  int                             k2_value;
 
   /// Common cell resources
   NR_COMMON_channels_t common_channels[NFAPI_CC_MAX];

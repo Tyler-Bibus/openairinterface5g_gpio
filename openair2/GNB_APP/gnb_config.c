@@ -1588,10 +1588,12 @@ void RCconfig_nr_macrlc(configmodule_interface_t *cfg)
 
   // MAC / RLC
   GET_PARAMS_LIST(MacRLC_ParamList, MacRLC_Params, MACRLCPARAMS_DESC, CONFIG_STRING_MACRLC_LIST, NULL, MACRLCPARAMS_CHECK);
-  nr_mac_config_t config = {0};
+  nr_mac_config_t config = {0}; // NOTE: config declaration started here.
   nr_pdsch_AntennaPorts_t *p = &config.pdsch_AntennaPorts;
   set_antenna_ports(&GNBParamList, &p->N1, &p->N2, &p->XP);
   config.pusch_AntennaPorts = *GNBParamList.paramarray[0][GNB_PUSCH_ANTENNAPORTS_IDX].iptr;
+  // FIXME do config for msg2 here?
+  config.msg2_slot = *GNBParamList.paramarray[0][].iptr;
   LOG_I(GNB_APP,
         "pdsch_AntennaPorts N1 %d N2 %d XP %d pusch_AntennaPorts %d\n",
         config.pdsch_AntennaPorts.N1,
