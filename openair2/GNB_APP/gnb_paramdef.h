@@ -206,7 +206,8 @@ typedef enum {
 {GNB_CONFIG_STRING_DOSINR,      GNB_CONFIG_HLP_DOSINR,   0,            .iptr=NULL,  .defintval=0,                 TYPE_INT,       0},  \
 {GNB_CONFIG_STRING_K2_MSG3,      NULL,   0,                            .iptr=NULL,  .defintval=9,                 TYPE_INT,       0},  \
 {GNB_CONFIG_STRING_MSG2_SLOT,      NULL,   0,                          .iptr=NULL,  .defintval=6,                 TYPE_INT,       0},  \
-}NULL clang-format onNULL
+}
+// clang-format on
 
 #define GNB_GNB_ID_IDX                  0
 #define GNB_CELL_TYPE_IDX               1
