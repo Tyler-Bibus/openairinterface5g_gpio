@@ -141,6 +141,8 @@ typedef enum {
 #define GNB_CONFIG_STRING_CU_SIB_LIST                   "cu_sibs"
 #define GNB_CONFIG_STRING_DU_SIB_LIST                   "du_sibs"
 #define GNB_CONFIG_STRING_DOSINR                        "do_SINR"
+#define GNB_CONFIG_STRING_K2_MSG3                       "k2_msg3"
+#define GNB_CONFIG_STRING_MSG2_SLOT                     "msg2_slot"
 
 #define GNB_CONFIG_HLP_STRING_ENABLE_SDAP               "enable the SDAP layer\n"
 #define GNB_CONFIG_HLP_FORCE256QAMOFF                   "suppress activation of 256 QAM despite UE support"
@@ -202,9 +204,9 @@ typedef enum {
 {GNB_CONFIG_STRING_CU_SIB_LIST,                  GNB_CONFIG_HLP_CU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DU_SIB_LIST,                  GNB_CONFIG_HLP_DU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DOSINR,      GNB_CONFIG_HLP_DOSINR,   0,            .iptr=NULL,  .defintval=0,                 TYPE_INT,       0},  \
-}
-// clang-format on
-
+{GNB_CONFIG_STRING_K2_MSG3,      NULL,   0,                            .iptr=NULL,  .defintval=9,                 TYPE_INT,       0},  \
+{GNB_CONFIG_STRING_MSG2_SLOT,      NULL,   0,                          .iptr=NULL,  .defintval=6,                 TYPE_INT,       0},  \
+}NULL clang-format onNULL
 
 #define GNB_GNB_ID_IDX                  0
 #define GNB_CELL_TYPE_IDX               1

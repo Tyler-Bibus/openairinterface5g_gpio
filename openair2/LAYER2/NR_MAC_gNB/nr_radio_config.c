@@ -1122,7 +1122,7 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
       asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list,
                   set_TimeDomainResourceAllocation(k2, 2, ul_symb));
     }
-    // UL TDA index 3 for msg3 in the mixed slot (TDD)
+    // UL TDA index 3 for msg3 in the first pure UL slot (TDD)
     int tdd_period_idx = get_tdd_period_idx(scc->tdd_UL_DL_ConfigurationCommon);
     int nb_periods_per_frame = get_nb_periods_per_frame(tdd_period_idx);
     int nb_slots_per_period = ((1 << mu) * 10) / nb_periods_per_frame;
