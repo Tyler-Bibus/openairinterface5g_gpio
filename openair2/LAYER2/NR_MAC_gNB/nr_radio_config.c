@@ -1085,7 +1085,7 @@ static struct NR_PUSCH_TimeDomainResourceAllocation *set_TimeDomainResourceAlloc
   return puschTdrAlloc;
 }
 
-void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay)
+void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay, nr_mac_config_t config)
 {
   //TODO change to accomodate for SRS
 
