@@ -1625,6 +1625,9 @@ void RCconfig_nr_macrlc(configmodule_interface_t *cfg)
   config.disable_harq = *GNBParamList.paramarray[0][GNB_DISABLE_HARQ_IDX].iptr;
   config.num_dlharq = *GNBParamList.paramarray[0][GNB_NUM_DL_HARQ_IDX].iptr;
   config.num_ulharq =  *GNBParamList.paramarray[0][GNB_NUM_UL_HARQ_IDX].iptr;
+  //FIXME Set config values for k2_msg3 and msg2_slot...
+  config.k2_msg3 = *GNBParamList.paramarray[0][GNB_K2_MSG_IDX].iptr;
+  config.msg2_slot = *GNBParamList.paramarray[0][GNB_MSG2_SLOT].iptr;
   if (config.disable_harq)
     LOG_W(GNB_APP, "\"disable_harq\" is a REL17 feature and is incompatible with REL15 and REL16 UEs!\n");
   LOG_I(GNB_APP,

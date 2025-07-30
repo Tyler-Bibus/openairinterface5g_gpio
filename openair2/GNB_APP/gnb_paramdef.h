@@ -247,6 +247,8 @@ typedef enum {
 #define GNB_CU_SIBS_IDX                 36
 #define GNB_DU_SIBS_IDX                 37
 #define GNB_DO_SINR_IDX                 38
+#define GNB_K2_MSG_IDX                  39
+#define GNB_MSG2_SLOT                   40
 
 #define TRACKING_AREA_CODE_OKRANGE {0x0001,0xFFFD}
 #define NUM_DL_HARQ_OKVALUES {2,4,6,8,10,12,16,32}
