@@ -803,8 +803,8 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   int slots_frame = nr_mac->frame_structure.numb_slots_frame;
   uint16_t K2 = tda_info.k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
-  int msg3_slot = 18; // TODO: pull this into config file.
-  const int sched_slot = msg3_slot % slots_frame; // FIXME: in my case, this should be 18 % slots_frame ()
+  int msg3_slot = nr_mac->msg2_slot + nr_mac->k2_msg3 + 3; // FIXME, confirm that these ptrs work
+  const int sched_slot = msg3_slot % slots_frame;
 
   if (is_ul_slot(sched_slot, &nr_mac->frame_structure)) {
     NR_beam_alloc_t beam_ul = beam_allocation_procedure(&nr_mac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_frame);
