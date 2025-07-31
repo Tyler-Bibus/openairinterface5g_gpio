@@ -1133,7 +1133,7 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay, n
     }
     else {
       // New method if both slots are defined
-      k2_msg3 = config.msg3_slot - config.msg2_slot - 3;
+      k2_msg3 = config.msg3_slot - config.msg2_slot - get_delta_for_k2(mu);
     }
     struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(k2_msg3, 3, ul_symb);
     if (*puschTdrAllocMsg3->k2 < min_fb_delay)
