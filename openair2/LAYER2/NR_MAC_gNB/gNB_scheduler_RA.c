@@ -804,8 +804,8 @@ static void nr_generate_Msg3_retransmission(module_id_t module_idP,
   uint16_t K2 = tda_info.k2 + get_NTN_Koffset(scc);
   const int sched_frame = (frame + (slot + K2) / slots_frame) % MAX_FRAME_NUMBER;
   int msg3_slot = nr_mac->radio_config.msg3_slot;
-  // if msg3_slot is not defined in config, do old method
-  if (msg3_slot == -1){
+  // if msg3_slot or msg2_slot is not defined in config, do old method
+  if (msg3_slot == -1 || nr_mac->radio_config.msg2_slot == -1){
     msg3_slot = (slot + K2);
   }
   const int sched_slot = msg3_slot % slots_frame;
