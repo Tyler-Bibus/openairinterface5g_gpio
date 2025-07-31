@@ -179,7 +179,7 @@ typedef struct nr_mac_config_t {
   nr_redcap_config_t *redcap;
   bool do_SINR;
   int msg2_slot;
-  int k2_msg3;
+  int msg3_slot;
 } nr_mac_config_t;
 
 typedef struct NR_preamble_ue {
