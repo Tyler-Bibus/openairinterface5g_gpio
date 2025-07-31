@@ -1126,7 +1126,15 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay, n
     int tdd_period_idx = get_tdd_period_idx(scc->tdd_UL_DL_ConfigurationCommon);
     int nb_periods_per_frame = get_nb_periods_per_frame(tdd_period_idx);
     int nb_slots_per_period = ((1 << mu) * 10) / nb_periods_per_frame;
-    int k2_msg3 = config.k2_msg3;
+    int k2_msg3 = 0;
+    if (config.msg3_slot == -1 || config.msg2_slot == -1){
+      // Old method if either is undefined
+      k2_msg3 = nb_slots_per_period - get_delta_for_k2(mu);
+    }
+    else {
+      // New method if both slots are defined
+      k2_msg3 = config.msg3_slot - config.msg2_slot - 3;
+    }
     struct NR_PUSCH_TimeDomainResourceAllocation *puschTdrAllocMsg3 = set_TimeDomainResourceAllocation(k2_msg3, 3, ul_symb);
     if (*puschTdrAllocMsg3->k2 < min_fb_delay)
       *puschTdrAllocMsg3->k2 += nb_slots_per_period;

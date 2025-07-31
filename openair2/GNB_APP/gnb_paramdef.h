@@ -141,7 +141,7 @@ typedef enum {
 #define GNB_CONFIG_STRING_CU_SIB_LIST                   "cu_sibs"
 #define GNB_CONFIG_STRING_DU_SIB_LIST                   "du_sibs"
 #define GNB_CONFIG_STRING_DOSINR                        "do_SINR"
-#define GNB_CONFIG_STRING_K2_MSG3                       "k2_msg3"
+#define GNB_CONFIG_STRING_MSG3_SLOT                     "msg3_slot"
 #define GNB_CONFIG_STRING_MSG2_SLOT                     "msg2_slot"
 
 #define GNB_CONFIG_HLP_STRING_ENABLE_SDAP               "enable the SDAP layer\n"
@@ -204,8 +204,8 @@ typedef enum {
 {GNB_CONFIG_STRING_CU_SIB_LIST,                  GNB_CONFIG_HLP_CU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DU_SIB_LIST,                  GNB_CONFIG_HLP_DU_SIBS, 0, .iptr=NULL, .defintarrayval=0,        TYPE_INTARRAY,  0},  \
 {GNB_CONFIG_STRING_DOSINR,      GNB_CONFIG_HLP_DOSINR,   0,            .iptr=NULL,  .defintval=0,                 TYPE_INT,       0},  \
-{GNB_CONFIG_STRING_K2_MSG3,      NULL,   0,                            .iptr=NULL,  .defintval=9,                 TYPE_INT,       0},  \
-{GNB_CONFIG_STRING_MSG2_SLOT,      NULL,   0,                          .iptr=NULL,  .defintval=6,                 TYPE_INT,       0},  \
+{GNB_CONFIG_STRING_MSG3_SLOT,      NULL,   0,                            .iptr=NULL,  .defintval=-1,                 TYPE_INT,       0},  \
+{GNB_CONFIG_STRING_MSG2_SLOT,      NULL,   0,                          .iptr=NULL,  .defintval=-1,                 TYPE_INT,       0},  \
 }
 // clang-format on
 
@@ -248,7 +248,7 @@ typedef enum {
 #define GNB_CU_SIBS_IDX                 36
 #define GNB_DU_SIBS_IDX                 37
 #define GNB_DO_SINR_IDX                 38
-#define GNB_K2_MSG_IDX                  39
+#define GNB_MSG3_SLOT_IDX               39
 #define GNB_MSG2_SLOT_IDX               40
 
 #define TRACKING_AREA_CODE_OKRANGE {0x0001,0xFFFD}
