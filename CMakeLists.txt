@@ -36,6 +36,8 @@ if(NOT DEFINED ENV{CPM_SOURCE_CACHE})
 endif()
 include("cmake_targets/CPM.cmake")
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_targets/tools/MODULES" "${CMAKE_MODULE_PATH}")
+
 ##############################
 ### CCache: reduce compilation time
 ##############################
@@ -172,7 +174,7 @@ else ()
 endif()
 
 # add autotools definitions that were maybe used!
-add_definitions("-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_STRERROR=1 -DHAVE_SOCKET=1 -DHAVE_MEMSET=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_LIBSCTP")
+add_definitions(-DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_ARPA_INET_H=1 -DHAVE_SYS_TIME_H=1 -DHAVE_SYS_SOCKET_H=1 -DHAVE_STRERROR=1 -DHAVE_SOCKET=1 -DHAVE_MEMSET=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1 -DHAVE_LIBSCTP)
 
 # we need -rdynamic to incorporate all symbols in shared objects, see man page
 set(commonOpts "-pipe -fPIC -Wall -fno-strict-aliasing -rdynamic")
@@ -848,6 +850,7 @@ set(PHY_SRC_COMMON
   ${OPENAIR1_DIR}/PHY/TOOLS/sqrt.c
   ${OPENAIR1_DIR}/PHY/TOOLS/get_sin_cos.c
   ${OPENAIR1_DIR}/PHY/TOOLS/oai_arith_operations.c
+  ${OPENAIR1_DIR}/PHY/log_tools.c
   )
 
 set(PHY_SRC
@@ -1406,12 +1409,14 @@ add_library(MME_APP ${MME_APP_SRC})
 target_link_libraries(MME_APP PRIVATE m2ap m3ap)
 target_link_libraries(MME_APP PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
 
+find_package(sctp REQUIRED)
 set(SCTP_SRC
   ${OPENAIR3_DIR}/SCTP/sctp_common.c
   ${OPENAIR3_DIR}/SCTP/sctp_eNB_task.c
   ${OPENAIR3_DIR}/SCTP/sctp_eNB_itti_messaging.c
 )
 add_library(SCTP_CLIENT ${SCTP_SRC})
+target_link_libraries(SCTP_CLIENT PRIVATE sctp::sctp)
 target_link_libraries(SCTP_CLIENT PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
 
 set(NAS_SRC ${OPENAIR3_DIR}/NAS/)
@@ -1710,7 +1715,6 @@ include_directories("${NFAPI_DIR}/pnf_sim/inc")
 add_library(oai_iqplayer MODULE
 	${OPENAIR_DIR}/radio/iqplayer/iqplayer_lib.c
 	)
-set(CMAKE_MODULE_PATH "${OPENAIR_DIR}/cmake_targets/tools/MODULES" "${CMAKE_MODULE_PATH}")
 
 #################################
 # add executables for operation
@@ -1757,7 +1761,7 @@ target_link_libraries(lte-softmodem PRIVATE
   ${NAS_UE_LIB} ITTI SIMU shlib_loader
   -Wl,--end-group z dl)
 
-target_link_libraries(lte-softmodem PRIVATE pthread m CONFIG_LIB rt sctp)
+target_link_libraries(lte-softmodem PRIVATE pthread m CONFIG_LIB rt)
 target_link_libraries(lte-softmodem PRIVATE ${T_LIB})
 target_link_libraries(lte-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
 target_link_libraries(lte-softmodem PRIVATE ${blas_LIBRARIES} ${cblas_LIBRARIES} ${lapacke_LIBRARIES} ${lapack_LIBRARIES})
@@ -1813,7 +1817,7 @@ target_link_libraries(lte-uesoftmodem PRIVATE
   ${NAS_UE_LIB} ITTI shlib_loader
   -Wl,--end-group z dl)
 
-target_link_libraries(lte-uesoftmodem PRIVATE pthread m CONFIG_LIB rt sctp)
+target_link_libraries(lte-uesoftmodem PRIVATE pthread m CONFIG_LIB rt)
 target_link_libraries(lte-uesoftmodem PRIVATE ${T_LIB})
 target_link_libraries(lte-uesoftmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
 target_link_libraries(lte-uesoftmodem PRIVATE ${blas_LIBRARIES} ${cblas_LIBRARIES} ${lapacke_LIBRARIES} ${lapack_LIBRARIES})
@@ -1850,7 +1854,7 @@ target_link_libraries(nr-softmodem PRIVATE
   time_management
   -Wl,--end-group z dl)
 
-target_link_libraries(nr-softmodem PRIVATE pthread m CONFIG_LIB rt sctp)
+target_link_libraries(nr-softmodem PRIVATE pthread m CONFIG_LIB rt)
 target_link_libraries(nr-softmodem PRIVATE ${T_LIB})
 target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
 target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
@@ -1887,7 +1891,7 @@ target_link_libraries(nr-cuup PRIVATE
                       CONFIG_LIB ITTI SCTP_CLIENT
                       GTPV1U e1ap f1ap
                       time_management
-                      z sctp dl pthread shlib_loader ${T_LIB})
+                      z dl pthread shlib_loader ${T_LIB})
 target_link_libraries(nr-cuup PRIVATE asn1_lte_rrc_hdrs asn1_nr_rrc_hdrs)
 if(E2_AGENT)
   target_link_libraries(nr-cuup PRIVATE e2_agent e2_agent_arg e2_ran_func_cuup)
@@ -2181,3 +2185,4 @@ add_subdirectory(openair1)
 add_subdirectory(openair2)
 add_subdirectory(openair3)
 add_subdirectory(radio)
+add_subdirectory(tests)

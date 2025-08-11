@@ -271,13 +271,13 @@ static void trx_usrp_start_interdigital_gpio(openair0_device *device, usrp_state
   AssertFatal(device->type == USRP_X400_DEV,
               "interdigital frontend device for beam management can only be used together with an X400\n");
   // set data direction register (DDR) to output
-  s->usrp->set_gpio_attr(s->gpio_bank, "DDR", 0xfff, 0xfff);
+  s->usrp->set_gpio_attr(s->gpio_bank, "DDR", 0x7f, 0x7f);
   // set lower GPIO#1 to be controlled automatically by ATR (the rest  bits are controlled manually)
-  s->usrp->set_gpio_attr(s->gpio_bank, "CTRL", (1 << 1), (1 << 1));
+  s->usrp->set_gpio_attr(s->gpio_bank, "CTRL", 0x7f, 0x7f);
   // set GPIO1 (Tx/Rx1)  to 1 for MHU1 for transmistting
-  s->usrp->set_gpio_attr(s->gpio_bank, "ATR_XX", (1 << 1), (1 << 1));
+  s->usrp->set_gpio_attr(s->gpio_bank, "ATR_XX", 0x7f, 0x7f);
   // set GPIO4 (ID0) to 1 and GPIO2 (TX/RX2) &GPIO3 (ID1) to 0
-  s->usrp->set_gpio_attr(s->gpio_bank, "OUT", (1 << 4), 0x1c);
+  //s->usrp->set_gpio_attr(s->gpio_bank, "OUT", (1 << 4), 0x1c);
 }
 
 static void trx_usrp_start_generic_gpio(openair0_device *device, usrp_state_t *s)
@@ -325,6 +325,15 @@ static int trx_usrp_start(openair0_device *device) {
     default:
       AssertFatal(false, "illegal GPIO controller %d\n", device->openair0_cfg->gpio_controller);
   }
+
+  // Setup for TDD, GPIO(4) = ATR_RX
+  // set data direction register to output
+  s->usrp->set_gpio_attr(s->gpio_bank, "DDR", 0x7f, 0x7f);
+  // set bits to be controlled by ATR
+  s->usrp->set_gpio_attr(s->gpio_bank, "CTRL", 0x7f, 0x7f);
+  // set bits to 1 when radio is transmitting AND reciving (PA control)
+  s->usrp->set_gpio_attr(s->gpio_bank, "ATR_XX", 0x7f, 0x7f);
+
 
   s->wait_for_first_pps = 1;
   s->rx_count = 0;

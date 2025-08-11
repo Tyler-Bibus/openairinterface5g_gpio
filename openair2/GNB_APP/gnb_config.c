@@ -1237,15 +1237,9 @@ static NR_ServingCellConfigCommon_t *get_scc_config(configmodule_interface_t *cf
   // TODO: Make CSS aggregation levels configurable
   int css_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
   css_num_agg_level_candidates[PDCCH_AGG_LEVEL1] = NR_SearchSpace__nrofCandidates__aggregationLevel1_n0;
-  if (get_softmodem_params()->usim_test) {
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n1;
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n1;
-  } else {
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n2;
-    css_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
-  }
+  css_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
+  css_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n2;
+  css_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
   css_num_agg_level_candidates[PDCCH_AGG_LEVEL16] = NR_SearchSpace__nrofCandidates__aggregationLevel16_n0;
 
   NR_SearchSpace_t *ss1 = rrc_searchspace_config(true, 1, 0, css_num_agg_level_candidates);
@@ -1503,7 +1497,8 @@ static seq_arr_t *fill_du_sibs(paramdef_t *GNBparamarray)
   if (NODE_IS_DU(get_node_type()))
     AssertFatal(GNBparamarray[GNB_CU_SIBS_IDX].numelt == 0, "This is DU, do not input CU SIBs\n");
 
-  if (!config_isparamset(GNBparamarray, GNB_DU_SIBS_IDX))
+  // TODO config_isparamset doesn't seem to work for array types, checking numelt instead
+  if (GNBparamarray[GNB_DU_SIBS_IDX].numelt == 0)
     return NULL;
 
   seq_arr_t *du_SIBs = malloc(sizeof(seq_arr_t));
@@ -1676,15 +1671,9 @@ void RCconfig_nr_macrlc(configmodule_interface_t *cfg)
   // Construct default aggragation level list or read from config
   int uess_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
   uess_num_agg_level_candidates[PDCCH_AGG_LEVEL1] = NR_SearchSpace__nrofCandidates__aggregationLevel1_n0;
-  if (get_softmodem_params()->usim_test) {
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n1;
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n1;
-  } else {
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n2;
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n0;
-    uess_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
-  }
+  uess_num_agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n2;
+  uess_num_agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n0;
+  uess_num_agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
   uess_num_agg_level_candidates[PDCCH_AGG_LEVEL16] = NR_SearchSpace__nrofCandidates__aggregationLevel16_n0;
   int* agg_level_list = uess_num_agg_level_candidates;
   int num_agg_levels = 5;
@@ -1810,12 +1799,13 @@ void RCconfig_nr_macrlc(configmodule_interface_t *cfg)
         beam_info->beams_per_period = beams_per_period;
         beam_info->beam_allocation_size = -1; // to be initialized once we have information on frame configuration
       }
-      if (config_isparamset(MacRLC_ParamList.paramarray[j], MACRLC_BEAMWEIGHTS_IDX)) {
+      // TODO config_isparamset doesn't seem to work for array types, checking numelt instead
+      int n = MacRLC_ParamList.paramarray[j][MACRLC_BEAMWEIGHTS_IDX].numelt;
+      if (n > 0) {
         if (NFAPI_MODE == NFAPI_MONOLITHIC) {
           GET_PARAMS_LIST(L1_ParamList, L1_Params, L1PARAMS_DESC, CONFIG_STRING_L1_LIST, NULL);
           AssertFatal(*(L1_ParamList.paramarray[j][L1_ANALOG_DAS].uptr) == 0, "No need to set beam weights in case of DAS\n");
         }
-        int n = MacRLC_ParamList.paramarray[j][MACRLC_BEAMWEIGHTS_IDX].numelt;
         int num_beam = n;
         if (!ab) {
           AssertFatal(n % num_tx == 0, "Error! Number of beam input needs to be multiple of TX antennas\n");
@@ -2000,7 +1990,8 @@ static seq_arr_t *fill_cu_sibs(paramdef_t *GNBparamarray)
   if (NODE_IS_CU(get_node_type()))
     AssertFatal(GNBparamarray[GNB_DU_SIBS_IDX].numelt == 0, "This is CU, do not input DU SIBs\n");
 
-  if (!config_isparamset(GNBparamarray, GNB_CU_SIBS_IDX))
+  // TODO config_isparamset doesn't seem to work for array types, checking numelt instead
+  if (GNBparamarray[GNB_CU_SIBS_IDX].numelt == 0)
     return NULL;
 
   seq_arr_t *SIBs = malloc(sizeof(seq_arr_t));

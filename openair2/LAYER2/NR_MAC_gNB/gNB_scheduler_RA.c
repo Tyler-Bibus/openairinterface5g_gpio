@@ -1085,6 +1085,7 @@ static bool nr_get_Msg3alloc(gNB_MAC_INST *mac, int CC_id, int current_slot, fra
       bwpStart = act_bwp_start;
   }
 
+
   /* search msg3_nb_rb free RBs */
   int rbSize = 0;
   int rbStart = 0;
@@ -2169,7 +2170,19 @@ void nr_schedule_RA(module_id_t module_idP,
 
       switch (ra->ra_state) {
         case nrRA_Msg2:
-          nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
+          
+          // NEW METHOD -> insures we only need ONE k value, and not dynamically change depending on what slot we send msg2
+          // Might want to change it to be defined by config?
+          bool is_current_slot_dl = is_dl_slot(slotP, &mac->frame_structure);
+          bool is_current_slot_ul = is_ul_slot(slotP, &mac->frame_structure); 
+
+          // If current is DL, but not special, send msg2
+          if(is_current_slot_dl && !is_current_slot_ul){
+            LOG_D(NR_MAC, "UE %04x frame.slot %d.%d: Found target DL before special slot", UE->rnti, frameP, slotP);
+            nr_generate_Msg2(module_idP, CC_id, frameP, slotP, UE, DL_req, TX_req);
+          }
+          // If not correct slot, delay msg2 until ready.
+
           break;
         case nrRA_Msg3_retransmission:
           nr_generate_Msg3_retransmission(module_idP, CC_id, frameP, slotP, UE, ul_dci_req);

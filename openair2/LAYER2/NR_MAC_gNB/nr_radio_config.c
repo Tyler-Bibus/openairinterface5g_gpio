@@ -80,7 +80,6 @@ static NR_BWP_t clone_generic_parameters(const NR_BWP_t *gp)
 static void verify_agg_levels(int num_cce_in_coreset,
                               const int in_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS],
                               int coresetid,
-                              int searchspaceid,
                               int out_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS])
 {
   int agg_level_to_n_cces[] = {1, 2, 4, 8, 16};
@@ -94,10 +93,9 @@ static void verify_agg_levels(int num_cce_in_coreset,
     if (num_agg_level_candidates * agg_level_to_n_cces[i] > num_cce_in_coreset) {
       int new_agg_level_candidates = num_cce_in_coreset / agg_level_to_n_cces[i];
       LOG_E(NR_RRC,
-            "Invalid configuration: Not enough CCEs in coreset %d, searchspace %d, agg_level %d, number of requested "
+            "Invalid configuration: Not enough CCEs in coreset %d, agg_level %d, number of requested "
             "candidates = %d, number of CCES in coreset %d. Aggregation level candidates limited to %d\n",
             coresetid,
-            searchspaceid,
             agg_level_to_n_cces[i],
             in_num_agg_level_candidates[i],
             num_cce_in_coreset,
@@ -1043,7 +1041,8 @@ void nr_rrc_config_dl_tda(struct NR_PDSCH_TimeDomainResourceAllocationList *pdsc
         // mixed slot TDA with TDA index 2
         struct NR_PDSCH_TimeDomainResourceAllocation *timedomainresourceallocation2 = CALLOC(1,sizeof(NR_PDSCH_TimeDomainResourceAllocation_t));
         timedomainresourceallocation2->mappingType = NR_PDSCH_TimeDomainResourceAllocation__mappingType_typeA;
-        timedomainresourceallocation2->startSymbolAndLength = get_SLIV(len_coreset,dl_symb-len_coreset); // mixed slot configuration starting in symbol 1 til the end of the dl allocation
+        // FIXME: hardcoded TDA DL on line below, potentially will want to move to config file or calculate..
+        timedomainresourceallocation2->startSymbolAndLength = get_SLIV(1,5); // mixed slot configuration starting in symbol 1 til the end of the dl allocation
         asn1cSeqAdd(&pdsch_TimeDomainAllocationList->list, timedomainresourceallocation2);
       }
     }
@@ -1100,6 +1099,8 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay, n
   // UL TDA index 0 is basic slot configuration starting in symbol 0 til the last but one symbol
   asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, set_TimeDomainResourceAllocation(k2, 0, 0));
 
+  // FIXME insert new UL TDA here... pretty sure at least. maybe remove following?
+
   // UL TDA index 1 in case of SRS
   asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, set_TimeDomainResourceAllocation(k2, 1, 0));
 
@@ -1141,6 +1142,7 @@ void nr_rrc_config_ul_tda(NR_ServingCellConfigCommon_t *scc, int min_fb_delay, n
     AssertFatal(*puschTdrAllocMsg3->k2 < 33,
                 "Computed k2 for msg3 %ld is larger than the range allowed by RRC (0..32)\n",
                 *puschTdrAllocMsg3->k2);
+
     asn1cSeqAdd(&pusch_ConfigCommon->choice.setup->pusch_TimeDomainAllocationList->list, puschTdrAllocMsg3);
   }
 }
@@ -1600,17 +1602,27 @@ static void config_downlinkBWP(NR_BWP_Downlink_t *bwp,
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList=calloc(1,sizeof(*bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList));
 
   int searchspaceid = 5 + bwp->bwp_Id;
-  int rrc_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
-  int num_cces = get_coreset_num_cces(coreset->frequencyDomainResources.buf, coreset->duration);
-  verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, searchspaceid, rrc_num_agg_level_candidates);
-  NR_SearchSpace_t *ss = rrc_searchspace_config(true, searchspaceid, coreset->controlResourceSetId, rrc_num_agg_level_candidates);
+  int agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
+  NR_SearchSpace_t *ss = NULL;
+  if (!is_SA) {
+    int num_cces = get_coreset_num_cces(coreset->frequencyDomainResources.buf, coreset->duration);
+    verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, agg_level_candidates);
+    ss = rrc_searchspace_config(true, searchspaceid, coreset->controlResourceSetId, agg_level_candidates);
+  } else {
+    agg_level_candidates[PDCCH_AGG_LEVEL1] = NR_SearchSpace__nrofCandidates__aggregationLevel1_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n1;
+    agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL16] = NR_SearchSpace__nrofCandidates__aggregationLevel16_n0;
+    ss = rrc_searchspace_config(true, searchspaceid, 0, agg_level_candidates);
+  }
   asn1cSeqAdd(&bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list, ss);
 
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->searchSpaceSIB1=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->searchSpaceOtherSystemInformation=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->pagingSearchSpace=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=NULL;
-  if(is_SA == false) {
+  if(!is_SA) {
     bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=calloc(1,sizeof(*bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace));
     *bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=ss->searchSpaceId;
   }
@@ -1638,13 +1650,18 @@ static void config_downlinkBWP(NR_BWP_Downlink_t *bwp,
   // frees
   NR_ControlResourceSet_t *coreset2 = get_coreset_config(bwp->bwp_Id, curr_bwp, ssb_bitmap);
   asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list, coreset2);
+  int rrc_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
+  int num_cces = get_coreset_num_cces(coreset2->frequencyDomainResources.buf, coreset2->duration);
+  verify_agg_levels(num_cces, num_agg_level_candidates, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
 
   searchspaceid = 10 + bwp->bwp_Id;
-  num_cces = get_coreset_num_cces(coreset2->frequencyDomainResources.buf, coreset2->duration);
-  verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, searchspaceid, rrc_num_agg_level_candidates);
-  NR_SearchSpace_t *ss2 =
-      rrc_searchspace_config(false, searchspaceid, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
+  NR_SearchSpace_t *ss2 = rrc_searchspace_config(true, searchspaceid, is_SA ? 0 : coreset2->controlResourceSetId, agg_level_candidates);
   asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss2);
+
+  searchspaceid = 20 + bwp->bwp_Id;
+  NR_SearchSpace_t *ss3 =
+      rrc_searchspace_config(false, searchspaceid, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
+  asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss3);
 
   bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToReleaseList = NULL;
   bwp->bwp_Dedicated->pdsch_Config = config_pdsch(ssb_bitmap, bwp->bwp_Id, dl_antenna_ports);
@@ -2413,9 +2430,7 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
   schedulingInfo->si_BroadcastStatus = NR_SchedulingInfo__si_BroadcastStatus_broadcasting;
   schedulingInfo->si_Periodicity = NR_SchedulingInfo__si_Periodicity_rf16;
   bool reg_sib = false;
-  NR_SI_SchedulingInfo_v1700_t *si_schedulingInfo_v17 = NULL;
   NR_SchedulingInfo2_r17_t *schedulingInfo2_r17 = NULL;
-  bool v17_sib = false;
   for (int i = 0; i < num_sibs; i++) {
     int sib_num = sibs[i];
     AssertFatal(sib_num > 1 && sib_num < 21, "other SIB invalid type\n");
@@ -2433,8 +2448,7 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
       }
       asn1cSeqAdd(&schedulingInfo->sib_MappingInfo.list, mapping);
     } else {
-      if (v17_sib == false) {
-        si_schedulingInfo_v17 = calloc(1, sizeof(*si_schedulingInfo_v17));
+      if (schedulingInfo2_r17 == NULL) {
         schedulingInfo2_r17 = calloc(1, sizeof(*schedulingInfo2_r17));
         schedulingInfo2_r17->si_BroadcastStatus_r17 = NR_SchedulingInfo2_r17__si_BroadcastStatus_r17_broadcasting;
         schedulingInfo2_r17->si_Periodicity_r17 = NR_SchedulingInfo2_r17__si_Periodicity_r17_rf16;
@@ -2453,7 +2467,8 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
   AssertFatal(reg_sib, "At least 1 SIB from SchedulingInfo (SIB2 to SIB14 included) needs to be present\n");
   asn1cSeqAdd(&info->schedulingInfoList.list, schedulingInfo);
   sib1->si_SchedulingInfo = info;
-  if (si_schedulingInfo_v17) {
+  if (schedulingInfo2_r17) {
+    NR_SI_SchedulingInfo_v1700_t *si_schedulingInfo_v17 = calloc_or_fail(1, sizeof(*si_schedulingInfo_v17));
     asn1cSeqAdd(&si_schedulingInfo_v17->schedulingInfoList2_r17.list, schedulingInfo2_r17);
     NR_SIB1_v1610_IEs_t *sib1_v1610 = NULL;
     if (sib1->nonCriticalExtension)
@@ -3181,7 +3196,6 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   verify_agg_levels(num_cces,
                     configuration->num_agg_level_candidates,
                     coreset->controlResourceSetId,
-                    searchspaceid,
                     rrc_num_agg_level_candidates);
   NR_SearchSpace_t *ss2 = rrc_searchspace_config(false, searchspaceid, coreset->controlResourceSetId, rrc_num_agg_level_candidates);
   asn1cSeqAdd(&bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss);
@@ -3284,16 +3298,16 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   }
   asn1cSeqAdd(&csi_MeasConfig->csi_SSB_ResourceSetToAddModList->list, ssbresset0);
 
-  int bwp_loop_end = n_dl_bwp > 0 ? n_dl_bwp : 1;
+  int bwp_loop_end = n_dl_bwp + 1;
   for (int bwp_loop = 0; bwp_loop < bwp_loop_end; bwp_loop++) {
     int curr_bwp, bwp_id;
     struct NR_SetupRelease_PDSCH_Config *pdsch_Config;
-    if (n_dl_bwp == 0) {
+    if (bwp_loop == 0) {
       pdsch_Config = SpCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config;
       curr_bwp = NRRIV2BW(scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
       bwp_id = 0;
     } else {
-      NR_BWP_Downlink_t *bwp = SpCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_loop];
+      NR_BWP_Downlink_t *bwp = SpCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_loop - 1];
       pdsch_Config = bwp->bwp_Dedicated->pdsch_Config;
       curr_bwp = NRRIV2BW(bwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
       bwp_id = bwp->bwp_Id;
