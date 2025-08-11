@@ -207,11 +207,19 @@ void exit_function(const char *file, const char *function, const int line, const
 
   for (ru_id=0; ru_id<RC.nb_RU; ru_id++) {
     if (RC.ru[ru_id] && RC.ru[ru_id]->rfdevice.trx_end_func) {
+      if (RC.ru[ru_id]->rfdevice.trx_get_stats_func) {
+        RC.ru[ru_id]->rfdevice.trx_get_stats_func(&RC.ru[ru_id]->rfdevice);
+        RC.ru[ru_id]->rfdevice.trx_get_stats_func = NULL;
+      }
       RC.ru[ru_id]->rfdevice.trx_end_func(&RC.ru[ru_id]->rfdevice);
       RC.ru[ru_id]->rfdevice.trx_end_func = NULL;
     }
 
     if (RC.ru[ru_id] && RC.ru[ru_id]->ifdevice.trx_end_func) {
+      if (RC.ru[ru_id]->ifdevice.trx_get_stats_func) {
+        RC.ru[ru_id]->ifdevice.trx_get_stats_func(&RC.ru[ru_id]->ifdevice);
+        RC.ru[ru_id]->ifdevice.trx_get_stats_func = NULL;
+      }
       RC.ru[ru_id]->ifdevice.trx_end_func(&RC.ru[ru_id]->ifdevice);
       RC.ru[ru_id]->ifdevice.trx_end_func = NULL;
     }
@@ -253,9 +261,9 @@ static int create_gNB_tasks(ngran_node_t node_type, configmodule_interface_t *cf
   RC.nrrrc = calloc(1, sizeof(*RC.nrrrc));
   RC.nrrrc[0] = RCconfig_NRRRC();
 
-  if (!get_softmodem_params()->nsa && !(node_type == ngran_gNB_DU)) {
+  if (node_type != ngran_gNB_DU) {
     // we start pdcp in both cuup (for drb) and cucp (for srb)
-    init_pdcp();
+    nr_pdcp_layer_init();
   }
 
   if (get_softmodem_params()->nsa) { //&& !NODE_IS_DU(node_type)
@@ -423,11 +431,17 @@ int stop_L1(module_id_t gnb_id)
     stop_RU(RC.nb_RU);
 
   /* stop trx devices, multiple carrier currently not supported by RU */
+  if (ru->rfdevice.trx_get_stats_func) {
+    ru->rfdevice.trx_get_stats_func(&ru->rfdevice);
+  }
   if (ru->rfdevice.trx_stop_func) {
     ru->rfdevice.trx_stop_func(&ru->rfdevice);
     LOG_I(GNB_APP, "turned off RU rfdevice\n");
   }
 
+  if (ru->ifdevice.trx_get_stats_func) {
+    ru->ifdevice.trx_get_stats_func(&ru->rfdevice);
+  }
   if (ru->ifdevice.trx_stop_func) {
     ru->ifdevice.trx_stop_func(&ru->ifdevice);
     LOG_I(GNB_APP, "turned off RU ifdevice\n");
@@ -497,12 +511,6 @@ static  void wait_nfapi_init(char *thread_name)
     pthread_cond_wait( &nfapi_sync_cond, &nfapi_sync_mutex );
 
   pthread_mutex_unlock(&nfapi_sync_mutex);
-}
-
-void init_pdcp(void) {
-  if (!NODE_IS_DU(get_node_type())) {
-    nr_pdcp_layer_init();
-  }
 }
 
 #ifdef E2_AGENT

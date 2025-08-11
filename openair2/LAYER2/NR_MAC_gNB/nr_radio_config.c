@@ -80,7 +80,6 @@ static NR_BWP_t clone_generic_parameters(const NR_BWP_t *gp)
 static void verify_agg_levels(int num_cce_in_coreset,
                               const int in_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS],
                               int coresetid,
-                              int searchspaceid,
                               int out_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS])
 {
   int agg_level_to_n_cces[] = {1, 2, 4, 8, 16};
@@ -94,10 +93,9 @@ static void verify_agg_levels(int num_cce_in_coreset,
     if (num_agg_level_candidates * agg_level_to_n_cces[i] > num_cce_in_coreset) {
       int new_agg_level_candidates = num_cce_in_coreset / agg_level_to_n_cces[i];
       LOG_E(NR_RRC,
-            "Invalid configuration: Not enough CCEs in coreset %d, searchspace %d, agg_level %d, number of requested "
+            "Invalid configuration: Not enough CCEs in coreset %d, agg_level %d, number of requested "
             "candidates = %d, number of CCES in coreset %d. Aggregation level candidates limited to %d\n",
             coresetid,
-            searchspaceid,
             agg_level_to_n_cces[i],
             in_num_agg_level_candidates[i],
             num_cce_in_coreset,
@@ -1600,17 +1598,27 @@ static void config_downlinkBWP(NR_BWP_Downlink_t *bwp,
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList=calloc(1,sizeof(*bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList));
 
   int searchspaceid = 5 + bwp->bwp_Id;
-  int rrc_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
-  int num_cces = get_coreset_num_cces(coreset->frequencyDomainResources.buf, coreset->duration);
-  verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, searchspaceid, rrc_num_agg_level_candidates);
-  NR_SearchSpace_t *ss = rrc_searchspace_config(true, searchspaceid, coreset->controlResourceSetId, rrc_num_agg_level_candidates);
+  int agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
+  NR_SearchSpace_t *ss = NULL;
+  if (!is_SA) {
+    int num_cces = get_coreset_num_cces(coreset->frequencyDomainResources.buf, coreset->duration);
+    verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, agg_level_candidates);
+    ss = rrc_searchspace_config(true, searchspaceid, coreset->controlResourceSetId, agg_level_candidates);
+  } else {
+    agg_level_candidates[PDCCH_AGG_LEVEL1] = NR_SearchSpace__nrofCandidates__aggregationLevel1_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL2] = NR_SearchSpace__nrofCandidates__aggregationLevel2_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL4] = NR_SearchSpace__nrofCandidates__aggregationLevel4_n1;
+    agg_level_candidates[PDCCH_AGG_LEVEL8] = NR_SearchSpace__nrofCandidates__aggregationLevel8_n0;
+    agg_level_candidates[PDCCH_AGG_LEVEL16] = NR_SearchSpace__nrofCandidates__aggregationLevel16_n0;
+    ss = rrc_searchspace_config(true, searchspaceid, 0, agg_level_candidates);
+  }
   asn1cSeqAdd(&bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->commonSearchSpaceList->list, ss);
 
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->searchSpaceSIB1=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->searchSpaceOtherSystemInformation=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->pagingSearchSpace=NULL;
   bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=NULL;
-  if(is_SA == false) {
+  if(!is_SA) {
     bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=calloc(1,sizeof(*bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace));
     *bwp->bwp_Common->pdcch_ConfigCommon->choice.setup->ra_SearchSpace=ss->searchSpaceId;
   }
@@ -1638,13 +1646,18 @@ static void config_downlinkBWP(NR_BWP_Downlink_t *bwp,
   // frees
   NR_ControlResourceSet_t *coreset2 = get_coreset_config(bwp->bwp_Id, curr_bwp, ssb_bitmap);
   asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->controlResourceSetToAddModList->list, coreset2);
+  int rrc_num_agg_level_candidates[NUM_PDCCH_AGG_LEVELS];
+  int num_cces = get_coreset_num_cces(coreset2->frequencyDomainResources.buf, coreset2->duration);
+  verify_agg_levels(num_cces, num_agg_level_candidates, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
 
   searchspaceid = 10 + bwp->bwp_Id;
-  num_cces = get_coreset_num_cces(coreset2->frequencyDomainResources.buf, coreset2->duration);
-  verify_agg_levels(num_cces, num_agg_level_candidates, coreset->controlResourceSetId, searchspaceid, rrc_num_agg_level_candidates);
-  NR_SearchSpace_t *ss2 =
-      rrc_searchspace_config(false, searchspaceid, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
+  NR_SearchSpace_t *ss2 = rrc_searchspace_config(true, searchspaceid, is_SA ? 0 : coreset2->controlResourceSetId, agg_level_candidates);
   asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss2);
+
+  searchspaceid = 20 + bwp->bwp_Id;
+  NR_SearchSpace_t *ss3 =
+      rrc_searchspace_config(false, searchspaceid, coreset2->controlResourceSetId, rrc_num_agg_level_candidates);
+  asn1cSeqAdd(&bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss3);
 
   bwp->bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToReleaseList = NULL;
   bwp->bwp_Dedicated->pdsch_Config = config_pdsch(ssb_bitmap, bwp->bwp_Id, dl_antenna_ports);
@@ -2413,9 +2426,7 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
   schedulingInfo->si_BroadcastStatus = NR_SchedulingInfo__si_BroadcastStatus_broadcasting;
   schedulingInfo->si_Periodicity = NR_SchedulingInfo__si_Periodicity_rf16;
   bool reg_sib = false;
-  NR_SI_SchedulingInfo_v1700_t *si_schedulingInfo_v17 = NULL;
   NR_SchedulingInfo2_r17_t *schedulingInfo2_r17 = NULL;
-  bool v17_sib = false;
   for (int i = 0; i < num_sibs; i++) {
     int sib_num = sibs[i];
     AssertFatal(sib_num > 1 && sib_num < 21, "other SIB invalid type\n");
@@ -2433,8 +2444,7 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
       }
       asn1cSeqAdd(&schedulingInfo->sib_MappingInfo.list, mapping);
     } else {
-      if (v17_sib == false) {
-        si_schedulingInfo_v17 = calloc(1, sizeof(*si_schedulingInfo_v17));
+      if (schedulingInfo2_r17 == NULL) {
         schedulingInfo2_r17 = calloc(1, sizeof(*schedulingInfo2_r17));
         schedulingInfo2_r17->si_BroadcastStatus_r17 = NR_SchedulingInfo2_r17__si_BroadcastStatus_r17_broadcasting;
         schedulingInfo2_r17->si_Periodicity_r17 = NR_SchedulingInfo2_r17__si_Periodicity_r17_rf16;
@@ -2453,7 +2463,8 @@ void update_SIB1_NR_SI(NR_BCCH_DL_SCH_Message_t *sib1_bcch, int num_sibs, int si
   AssertFatal(reg_sib, "At least 1 SIB from SchedulingInfo (SIB2 to SIB14 included) needs to be present\n");
   asn1cSeqAdd(&info->schedulingInfoList.list, schedulingInfo);
   sib1->si_SchedulingInfo = info;
-  if (si_schedulingInfo_v17) {
+  if (schedulingInfo2_r17) {
+    NR_SI_SchedulingInfo_v1700_t *si_schedulingInfo_v17 = calloc_or_fail(1, sizeof(*si_schedulingInfo_v17));
     asn1cSeqAdd(&si_schedulingInfo_v17->schedulingInfoList2_r17.list, schedulingInfo2_r17);
     NR_SIB1_v1610_IEs_t *sib1_v1610 = NULL;
     if (sib1->nonCriticalExtension)
@@ -3181,7 +3192,6 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   verify_agg_levels(num_cces,
                     configuration->num_agg_level_candidates,
                     coreset->controlResourceSetId,
-                    searchspaceid,
                     rrc_num_agg_level_candidates);
   NR_SearchSpace_t *ss2 = rrc_searchspace_config(false, searchspaceid, coreset->controlResourceSetId, rrc_num_agg_level_candidates);
   asn1cSeqAdd(&bwp_Dedicated->pdcch_Config->choice.setup->searchSpacesToAddModList->list, ss);
@@ -3284,16 +3294,16 @@ static NR_SpCellConfig_t *get_initial_SpCellConfig(int uid,
   }
   asn1cSeqAdd(&csi_MeasConfig->csi_SSB_ResourceSetToAddModList->list, ssbresset0);
 
-  int bwp_loop_end = n_dl_bwp > 0 ? n_dl_bwp : 1;
+  int bwp_loop_end = n_dl_bwp + 1;
   for (int bwp_loop = 0; bwp_loop < bwp_loop_end; bwp_loop++) {
     int curr_bwp, bwp_id;
     struct NR_SetupRelease_PDSCH_Config *pdsch_Config;
-    if (n_dl_bwp == 0) {
+    if (bwp_loop == 0) {
       pdsch_Config = SpCellConfig->spCellConfigDedicated->initialDownlinkBWP->pdsch_Config;
       curr_bwp = NRRIV2BW(scc->downlinkConfigCommon->initialDownlinkBWP->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
       bwp_id = 0;
     } else {
-      NR_BWP_Downlink_t *bwp = SpCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_loop];
+      NR_BWP_Downlink_t *bwp = SpCellConfig->spCellConfigDedicated->downlinkBWP_ToAddModList->list.array[bwp_loop - 1];
       pdsch_Config = bwp->bwp_Dedicated->pdsch_Config;
       curr_bwp = NRRIV2BW(bwp->bwp_Common->genericParameters.locationAndBandwidth, MAX_BWP_SIZE);
       bwp_id = bwp->bwp_Id;
@@ -3511,7 +3521,8 @@ static bool verify_radio_configuration(int uid, const NR_ServingCellConfigCommon
     return false;
   }
 
-  int n_dl_bwp = scd->downlinkBWP_ToAddModList ? scd->downlinkBWP_ToAddModList->list.count : 1;
+  /* for RedCap, scd is NULL */
+  int n_dl_bwp = scd && scd->downlinkBWP_ToAddModList ? scd->downlinkBWP_ToAddModList->list.count : 1;
   int csi_offset = fs->numb_slots_period * n_dl_bwp;
   // see set_csirs_periodicity
   if (csi_offset / 320 >= get_full_dl_slots_per_period(fs)) {
@@ -4097,4 +4108,199 @@ NR_ReconfigurationWithSync_t *get_reconfiguration_with_sync(rnti_t rnti, uid_t u
   }
 
   return reconfigurationWithSync;
+}
+
+static NR_MeasGapConfig_t *get_gap_config_from_smtc(const NR_SSB_MTC_t *ssb_mtc)
+{
+  NR_MeasGapConfig_t *measGapConfig = calloc_or_fail(1, sizeof(*measGapConfig));
+  measGapConfig->ext1 = calloc_or_fail(1, sizeof(*measGapConfig->ext1));
+  measGapConfig->ext1->gapUE = calloc_or_fail(1, sizeof(*measGapConfig->ext1->gapUE));
+  measGapConfig->ext1->gapUE->present = NR_SetupRelease_GapConfig_PR_setup;
+  NR_GapConfig_t *gap_config = calloc_or_fail(1, sizeof(*gap_config));
+  measGapConfig->ext1->gapUE->choice.setup = gap_config;
+
+  // mgta = Measurement Gap Timing Advance, to provide sufficient time for the UE to re-tune its transceiver
+  // This allows the Measurement Gap to extend mgta ms either side of the SS/PBCH Measurement Window.
+  gap_config->mgta = NR_GapConfig__mgta_ms0dot5;
+
+  // mgrp = Measurement Gap Repetition Period
+  // gapOffset = It defines the start of the Measurement Gaps relative to the start of the radio frame with SFN = 0
+  // The Measurement Gaps need to be synchronized with the SS/PBCH transmissions which are to be measured
+  gap_config->mgrp = NR_GapConfig__mgrp_ms160;
+  switch (ssb_mtc->periodicityAndOffset.present) {
+    case NR_SSB_MTC__periodicityAndOffset_PR_sf20:
+      gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf20;
+      break;
+    case NR_SSB_MTC__periodicityAndOffset_PR_sf40:
+      gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf40;
+      break;
+    case NR_SSB_MTC__periodicityAndOffset_PR_sf80:
+      gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf80;
+      break;
+    case NR_SSB_MTC__periodicityAndOffset_PR_sf160:
+      gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf160;
+      break;
+    default:
+      LOG_W(NR_RRC, "SMTC periodicity higher than MGRP\n");
+      // With this configuration, not all SSBs belong to the Measurement Gap.
+      if (ssb_mtc->periodicityAndOffset.present == NR_SSB_MTC__periodicityAndOffset_PR_sf5) {
+        gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf5;
+      } else if (ssb_mtc->periodicityAndOffset.present == NR_SSB_MTC__periodicityAndOffset_PR_sf10) {
+        gap_config->gapOffset = ssb_mtc->periodicityAndOffset.choice.sf10;
+      }
+  }
+
+  // mgl = Measurement Gap Length
+  // FIXME: At least the duration of the SMTC plus 2 times the mgta should be enough,
+  //  however, at the moment it only works by setting the maximum value
+  gap_config->mgl = NR_GapConfig__mgl_ms6;
+
+  return measGapConfig;
+}
+
+NR_MeasurementTimingConfiguration_t *get_nr_mtc(uint8_t *buf, uint32_t len)
+{
+  if (buf == NULL || len == 0)
+    return NULL;
+
+  NR_MeasurementTimingConfiguration_t *mtc = NULL;
+  asn_dec_rval_t dec_rval = uper_decode(NULL, &asn_DEF_NR_MeasurementTimingConfiguration, (void **)&mtc, buf, len, 0, 0);
+  if (dec_rval.code != RC_OK) {
+    LOG_E(NR_MAC, "cannot decode NR MeasurementTimingConfiguration, ignoring\n");
+    ASN_STRUCT_FREE(asn_DEF_NR_MeasurementTimingConfiguration, mtc);
+    return NULL;
+  }
+  return mtc;
+}
+
+/** @brief return Measurement Gap Repetition Period from ASN.1 config */
+static int get_mgrp(long mgrp)
+{
+  switch (mgrp) {
+    case NR_GapConfig__mgrp_ms20:
+      return 20;
+    case NR_GapConfig__mgrp_ms40:
+      return 40;
+    case NR_GapConfig__mgrp_ms80:
+      return 80;
+    case NR_GapConfig__mgrp_ms160:
+      return 160;
+    default:
+      LOG_E(NR_MAC, "Invalid MGRP %ld\n", mgrp);
+    return -1;
+  }
+}
+
+/** @brief Return Measurement Gap Length from ASN.1 config */
+static float get_mgl(long mgl)
+{
+  switch (mgl) {
+    case NR_GapConfig__mgl_ms1dot5:
+      return 1.5;
+    case NR_GapConfig__mgl_ms3:
+      return 3.0;
+    case NR_GapConfig__mgl_ms3dot5:
+      return 3.5;
+    case NR_GapConfig__mgl_ms4:
+      return 4;
+    case NR_GapConfig__mgl_ms5dot5:
+      return 5.5;
+    case NR_GapConfig__mgl_ms6:
+      return 6;
+    default:
+      LOG_E(NR_MAC, "Invalid MGL %ld\n", mgl);
+    return -1;
+  }
+}
+
+/** @brief Return Measurement Gap Timing Advance, from ASN.1 config */
+static float get_mgta(long mgta)
+{
+  switch (mgta) {
+    case NR_GapConfig__mgta_ms0:
+      return 0.0;
+    case NR_GapConfig__mgta_ms0dot25:
+      return 0.25;
+    case NR_GapConfig__mgta_ms0dot5:
+      return 0.5;
+    default:
+      LOG_E(NR_MAC, "Invalid MGTA %ld\n", mgta);
+    return -1;
+  }
+}
+
+/** @brief Return Measurement Gap Configuration, from ASN.1 config */
+const NR_GapConfig_t *get_gap_config(const NR_MeasGapConfig_t *mgc)
+{
+  if (mgc->gapFR2 && mgc->gapFR2->present == NR_SetupRelease_GapConfig_PR_setup)
+    return mgc->gapFR2->choice.setup;
+
+  // FR1 case
+  if (!mgc->ext1)
+    return NULL;
+
+  const NR_SetupRelease_GapConfig_t *gapUE = mgc->ext1->gapUE;
+  if (gapUE && gapUE->present == NR_SetupRelease_GapConfig_PR_setup)
+    return gapUE->choice.setup;
+
+  const NR_SetupRelease_GapConfig_t *gapFR1 = mgc->ext1->gapFR1;
+  if (gapFR1 && gapFR1->present == NR_SetupRelease_GapConfig_PR_setup)
+    return gapFR1->choice.setup;
+
+  return NULL;
+}
+
+measgap_config_t create_measgap_config(const NR_MeasurementTimingConfiguration_t *mtc, int scs, int min_rxtxtime)
+{
+  measgap_config_t mgc = {0};
+  const NR_MeasTimingList_t *mtlist = mtc->criticalExtensions.choice.c1->choice.measTimingConf->measTiming;
+  const NR_MeasTiming_t *mt = mtlist->list.array[0];
+  DevAssert(mt != NULL && mt->frequencyAndTiming != NULL);
+  const struct NR_MeasTiming__frequencyAndTiming *ft = mt->frequencyAndTiming;
+  const NR_SSB_MTC_t *ssb_mtc = &ft->ssb_MeasurementTimingConfiguration;
+  NR_MeasGapConfig_t *measGapConfig = get_gap_config_from_smtc(ssb_mtc);
+  const NR_GapConfig_t *gap_config = get_gap_config(measGapConfig);
+  if (!gap_config)
+    return mgc;
+
+  mgc.mgrp_ms = get_mgrp(gap_config->mgrp);
+  DevAssert(mgc.mgrp_ms != -1);
+  mgc.mgrp = gap_config->mgrp;
+
+  mgc.gapOffset = gap_config->gapOffset;
+  mgc.mgta = gap_config->mgta;
+  mgc.n_slots_mgta = ((int)(10 * get_mgta(gap_config->mgta)) << scs) / 10;
+
+  // We start the timer K2 slots earlier to avoid scheduling feedback PUCCHs inside measGap
+  // or depending on the current min_rxtxtime earlier
+  // TS 38.214 - Table 6.1.2.1.1.2
+  const int max_k2 = max(3, min_rxtxtime);
+
+  mgc.n_slots_advance = mgc.n_slots_mgta + max_k2;
+
+  mgc.mgl_ms = get_mgl(gap_config->mgl);
+  DevAssert(mgc.mgl_ms != -1);
+  mgc.mgl = gap_config->mgl;
+  mgc.mgl_slots = ((int)(10 * (mgc.mgl_ms + max_k2)) << scs) / 10;
+
+  mgc.enable = true;
+  return mgc;
+}
+
+int encode_measgap_config(const measgap_config_t *c, uint8_t *buf)
+{
+  NR_MeasGapConfig_t *measGapConfig = calloc_or_fail(1, sizeof(*measGapConfig));
+  measGapConfig->ext1 = calloc_or_fail(1, sizeof(*measGapConfig->ext1));
+  measGapConfig->ext1->gapUE = calloc_or_fail(1, sizeof(*measGapConfig->ext1->gapUE));
+  measGapConfig->ext1->gapUE->present = NR_SetupRelease_GapConfig_PR_setup;
+  NR_GapConfig_t *gap_config = calloc_or_fail(1, sizeof(*gap_config));
+  measGapConfig->ext1->gapUE->choice.setup = gap_config;
+  gap_config->mgta = c->mgta;
+  gap_config->mgrp = c->mgrp;
+  gap_config->gapOffset = c->gapOffset;
+  gap_config->mgl = c->mgl;
+  asn_enc_rval_t enc_rval_mgc = uper_encode_to_buffer(&asn_DEF_NR_MeasGapConfig, NULL, measGapConfig, buf, 1024);
+  AssertFatal(enc_rval_mgc.encoded > 0, "Could not encode CellGroup, failed element %s\n", enc_rval_mgc.failed_type->name);
+  ASN_STRUCT_FREE(asn_DEF_NR_MeasGapConfig, measGapConfig);
+  return (int)((enc_rval_mgc.encoded + 7) >> 3);
 }

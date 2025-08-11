@@ -1160,6 +1160,7 @@ uint32_t get_ssb_offset_to_pointA(uint32_t absoluteFrequencySSB,
   const int ssb_offset_point_a = ((scaled_abs_diff / 12) - 10) * scaling;
   // Offset to point A needs to be divisible by scaling
   AssertFatal(ssb_offset_point_a % scaling == 0, "PRB offset %d not valid for scs %d\n", ssb_offset_point_a, ssbSubcarrierSpacing);
+  AssertFatal(ssb_offset_point_a >= 0, "ssb offset is negative %d for scs %d\n", ssb_offset_point_a, ssbSubcarrierSpacing);
   return ssb_offset_point_a;
 }
 
@@ -1413,6 +1414,11 @@ bool nr_timer_expired(const NR_timer_t *timer)
 uint32_t nr_timer_elapsed_time(const NR_timer_t *timer)
 {
   return timer->counter;
+}
+
+uint32_t nr_timer_remaining_time(const NR_timer_t *timer)
+{
+  return timer->target - timer->counter;
 }
 
 void nr_timer_setup(NR_timer_t *timer, const uint32_t target, const uint32_t step)

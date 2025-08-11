@@ -78,6 +78,10 @@ static uint8_t nr_ue_get_sdu(NR_UE_MAC_INST_t *mac,
                              int P_MAX,
                              bool *BSRsent);
 
+static void nr_ue_pucch_scheduler(NR_UE_MAC_INST_t *mac, frame_t frameP, int slotP);
+static void nr_schedule_csirs_reception(NR_UE_MAC_INST_t *mac, int frame, int slot);
+static void nr_schedule_csi_for_im(NR_UE_MAC_INST_t *mac, int frame, int slot);
+
 static void clear_ul_config_request(NR_UE_MAC_INST_t *mac)
 {
   int slots = mac->frame_structure.numb_slots_frame;
@@ -797,12 +801,7 @@ int nr_config_pusch_pdu(NR_UE_MAC_INST_t *mac,
 
   int start_symbol = pusch_config_pdu->start_symbol_index;
   int number_of_symbols = pusch_config_pdu->nr_of_symbols;
-  int number_dmrs_symbols = 0;
-  for (int i = start_symbol; i < start_symbol + number_of_symbols; i++) {
-    if ((pusch_config_pdu->ul_dmrs_symb_pos >> i) & 0x01)
-      number_dmrs_symbols += 1;
-  }
-
+  int number_dmrs_symbols = count_bits64_with_mask(pusch_config_pdu->ul_dmrs_symb_pos, start_symbol, number_of_symbols);
   int nb_dmrs_re_per_rb =
       ((pusch_config_pdu->dmrs_config_type == pusch_dmrs_type1) ? 6 : 4) * pusch_config_pdu->num_dmrs_cdm_grps_no_data;
 
@@ -1714,7 +1713,7 @@ static bool schedule_uci_on_pusch(NR_UE_MAC_INST_t *mac,
   return mux_done;
 }
 
-void nr_ue_pucch_scheduler(NR_UE_MAC_INST_t *mac, frame_t frameP, int slotP)
+static void nr_ue_pucch_scheduler(NR_UE_MAC_INST_t *mac, frame_t frameP, int slotP)
 {
   PUCCH_sched_t pucch[3] = {0}; // TODO the size might change in the future in case of multiple SR or multiple CSI in a slot
 
@@ -1789,7 +1788,7 @@ void nr_ue_pucch_scheduler(NR_UE_MAC_INST_t *mac, frame_t frameP, int slotP)
   }
 }
 
-void nr_schedule_csi_for_im(NR_UE_MAC_INST_t *mac, int frame, int slot)
+static void nr_schedule_csi_for_im(NR_UE_MAC_INST_t *mac, int frame, int slot)
 {
   if (!mac->sc_info.csi_MeasConfig)
     return;
@@ -1924,7 +1923,7 @@ uint8_t set_csirs_measurement_bitmap(NR_CSI_MeasConfig_t *csi_measconfig, NR_CSI
 }
 
 void configure_csi_resource_mapping(fapi_nr_dl_config_csirs_pdu_rel15_t *csirs_config_pdu,
-                                    NR_CSI_RS_ResourceMapping_t  *resourceMapping,
+                                    const NR_CSI_RS_ResourceMapping_t *resourceMapping,
                                     uint32_t bwp_size,
                                     uint32_t bwp_start)
 {
@@ -2030,7 +2029,7 @@ void configure_csi_resource_mapping(fapi_nr_dl_config_csirs_pdu_rel15_t *csirs_c
   }
 }
 
-void nr_schedule_csirs_reception(NR_UE_MAC_INST_t *mac, int frame, int slot)
+static void nr_schedule_csirs_reception(NR_UE_MAC_INST_t *mac, int frame, int slot)
 {
   if (!mac->sc_info.csi_MeasConfig)
     return;
@@ -2514,7 +2513,10 @@ static long get_num_bytes_to_reqlc(NR_UE_MAC_INST_t *mac,
     }
   }
   AssertFatal(num_remaining_bytes >= 0 && num_bytes_requested <= buflen_remain,
-              "the total number of bytes allocated until target length is greater than expected\n");
+              "the total number of bytes allocated until target length is greater than expected: num_bytes_requested %ld, "
+              "buflen_remain %d\n",
+              num_bytes_requested,
+              buflen_remain);
   LOG_D(NR_MAC, "number of bytes requested for lcid %d is %li\n", lc_num, num_bytes_requested);
 
   return num_bytes_requested;
@@ -2780,11 +2782,9 @@ static uint8_t nr_ue_get_sdu(NR_UE_MAC_INST_t *mac,
             remain);
 
       if (num_lcids_same_priority == count_same_priority_lcids) {
-        buflen_ep = (remain - (count_same_priority_lcids * sizeof(NR_MAC_SUBHEADER_LONG))) / count_same_priority_lcids;
-        /* after serving equal priority LCIDs in the first round, buflen_remain could be > 0 and < (count_same_priority_lcids * sh_size)
-           if above division yeilds a remainder. hence the following sets buflen_ep to 0 if there is not enough buffer left for subsequent rounds
-        */
-        buflen_ep = buflen_ep < 0 ? 0 : buflen_ep;
+        buflen_ep = remain < count_same_priority_lcids * sizeof(NR_MAC_SUBHEADER_LONG)
+                        ? 0
+                        : (remain - (count_same_priority_lcids * sizeof(NR_MAC_SUBHEADER_LONG))) / count_same_priority_lcids;
       }
 
       while (mac_ce_info.end_for_tailer - mac_ce_info.cur_ptr > 0) {

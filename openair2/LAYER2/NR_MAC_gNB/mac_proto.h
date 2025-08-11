@@ -203,6 +203,8 @@ void nr_csirs_scheduling(int Mod_idP, frame_t frame, slot_t slot, nfapi_nr_dl_tt
 
 void nr_csi_meas_reporting(int Mod_idP, frame_t frameP, slot_t slotP);
 
+void nr_measgap_scheduling(gNB_MAC_INST *nr_mac, frame_t frame, sub_frame_t slot);
+
 int nr_acknack_scheduling(gNB_MAC_INST *mac,
                           NR_UE_info_t *UE,
                           frame_t frameP,
@@ -281,9 +283,8 @@ void set_r_pucch_parms(int rsetindex,
 /* find coreset within the search space */
 NR_ControlResourceSet_t *get_coreset(gNB_MAC_INST *nrmac,
                                      NR_ServingCellConfigCommon_t *scc,
-                                     void *bwp,
-                                     NR_SearchSpace_t *ss,
-                                     NR_SearchSpace__searchSpaceType_PR ss_type);
+                                     NR_BWP_DownlinkDedicated_t *bwp_dedicated,
+                                     NR_ControlResourceSetId_t coreset_id);
 
 long get_K2(NR_PUSCH_TimeDomainResourceAllocationList_t *tdaList,
             int time_domain_assignment,

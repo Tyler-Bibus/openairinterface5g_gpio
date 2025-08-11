@@ -686,7 +686,8 @@ static void other_sib_sched_control(module_id_t module_idP,
   }
 
   AssertFatal(nr_of_candidates > 0, "nr_of_candidates is 0\n");
-  NR_ControlResourceSet_t *coreset = get_coreset(gNB_mac, scc, NULL, ss, NR_SearchSpace__searchSpaceType_PR_common);
+  AssertFatal(ss->controlResourceSetId, "ss->controlResourceSetId is NULL\n");
+  NR_ControlResourceSet_t *coreset = get_coreset(gNB_mac, scc, NULL, *ss->controlResourceSetId);
   if (!gNB_mac->sched_pdcch_otherSI) {
     gNB_mac->sched_pdcch_otherSI = calloc(1, sizeof(*gNB_mac->sched_pdcch_otherSI));
     *gNB_mac->sched_pdcch_otherSI = set_pdcch_structure(gNB_mac, ss, coreset, scc, NULL, type0_PDCCH_CSS_config);
@@ -774,7 +775,7 @@ static bool test_other_sib_sched_occasion(int window_pos,
                                           int rel_frame,
                                           int rel_slot)
 {
-  int x = window_pos * window_len;
+  int x = (window_pos - 1) * window_len;
   int T = 8 << period;
   int test_frame = (frame - rel_frame) % MAX_FRAME_NUMBER;
   int si_slot = (x % n_slots_frame) + rel_slot;
@@ -847,7 +848,7 @@ void schedule_nr_other_sib(module_id_t module_idP,
   for (int ssb = 0; ssb < num_ssb; ssb++) {
     for (int i = 0; i < schedInfo->schedulingInfoList.list.count; i++) {
       NR_SchedulingInfo_t *schedulingInfo = schedInfo->schedulingInfoList.list.array[i];
-      if (test_other_sib_sched_occasion(i,
+      if (test_other_sib_sched_occasion(i + 1,
                                         window_length_sl,
                                         schedulingInfo->si_Periodicity,
                                         n_slots_frame,

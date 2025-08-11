@@ -170,8 +170,12 @@ void exit_function(const char *file, const char *function, const int line, const
 
   if (PHY_vars_UE_g && PHY_vars_UE_g[0]) {
     for(CC_id=0; CC_id<MAX_NUM_CCs; CC_id++) {
-      if (PHY_vars_UE_g[0][CC_id] && PHY_vars_UE_g[0][CC_id]->rfdevice.trx_end_func)
+      if (PHY_vars_UE_g[0][CC_id] && PHY_vars_UE_g[0][CC_id]->rfdevice.trx_end_func) {
+        if (PHY_vars_UE_g[0][CC_id]->rfdevice.trx_get_stats_func) {
+          PHY_vars_UE_g[0][CC_id]->rfdevice.trx_get_stats_func(&PHY_vars_UE_g[0][CC_id]->rfdevice);
+        }
         PHY_vars_UE_g[0][CC_id]->rfdevice.trx_end_func(&PHY_vars_UE_g[0][CC_id]->rfdevice);
+      }
     }
   }
 
@@ -197,11 +201,15 @@ nrUE_params_t *get_nrUE_params(void) {
 }
 static void get_options(configmodule_interface_t *cfg)
 {
-  paramdef_t cmdline_params[] =CMDLINE_NRUEPARAMS_DESC ;
+  paramdef_t cmdline_params[] = CMDLINE_NRUEPARAMS_DESC;
   int numparams = sizeofArray(cmdline_params);
   config_get(cfg, cmdline_params, numparams, NULL);
   if (nrUE_params.vcdflag > 0)
     ouput_vcd = 1;
+  AssertFatal(nrUE_params.extra_pdu_id != get_softmodem_params()->default_pdu_session_id,
+              "Default PDU ID (%d) and Extra PDU ID (%d) must be different!\n",
+              get_softmodem_params()->default_pdu_session_id,
+              nrUE_params.extra_pdu_id);
 }
 
 // set PHY vars from command line
@@ -591,6 +599,8 @@ int main(int argc, char **argv)
           ret = pthread_join(phy_vars->stat_thread, NULL);
           AssertFatal(ret == 0, "pthread_join error %d, errno %d (%s)\n", ret, errno, strerror(errno));
         }
+        if (phy_vars->rfdevice.trx_get_stats_func)
+          phy_vars->rfdevice.trx_get_stats_func(&phy_vars->rfdevice);
         if (phy_vars->rfdevice.trx_end_func)
           phy_vars->rfdevice.trx_end_func(&phy_vars->rfdevice);
       }
